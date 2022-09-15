@@ -21,6 +21,7 @@ class Area:
         self.p1 = p1
         self.p2 = p2
         self.content = content
+        
     def __init__(self, x : float, y : float, w: float, h: float, content=None) -> None:
         self.p1 = Point(x,y)
         self.p2 = Point(x+w,y+h)
@@ -60,18 +61,24 @@ class Area:
                 slices.append(Area(self.x1, self.y1 + i * self.h//nb_slices, self.w, self.h//nb_slices))
         return slices
 
+    def range(self, axe: Axe) -> 'Range':
+        if axe == Axe.ABSCISSA:
+            return Range(self.x1, self.x2, axe)
+        else:
+            return Range(self.y1, self.y2, axe)
+
 class Range:
-    def __init__(self, a: float, b: float, type: int) -> None:
-        assert type == Axe.ABSCISSA or type == Axe.ORDINATE, f"You must pass the type Range.ABSCISSA ({Axe.ABSCISSA}) or Range.ORDONATE ({Axe.ORDINATE})"
+    def __init__(self, a: float, b: float, axe: Axe) -> None:
+        assert axe == Axe.ABSCISSA or axe == Axe.ORDINATE, f"You must pass the axe Axe.ABSCISSA ({Axe.ABSCISSA}) or Axe.ORDONATE ({Axe.ORDINATE})"
         self.a = a
         self.b = b
-        self.type = type
+        self.axe = axe
     
     def middle(self) -> float:
         return (self.b + self.a)/2
     
     def in_range(self, area: Area) -> bool:
-        if self.type == Axe.ABSCISSA:
+        if self.axe == Axe.ABSCISSA:
             return area.x1 < self.middle < area.x2
         else:
             return area.y1 < self.middle < area.y2
