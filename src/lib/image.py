@@ -38,10 +38,10 @@ class Image:
     def sub(self, margin: Area = Area(Point(0,0),Point(0,0))) -> 'Image':
         return Image(self,margin)
     
-    def show(self, title = "", color: bool = True):
+    def show(self, title: str = "", color: bool = True) -> None:
         cv2.imshow(title,self.color if color else self.gray)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     
-    def save(self, path: str, name: str, color: bool = True):
+    def save(self, path: str, name: str, color: bool = True) -> None:
         cv2.imwrite(f"{path}/{name}.jpg", self.color if color else self.gray)
