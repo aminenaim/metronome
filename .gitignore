@@ -1,2 +1,3 @@
 tests/output
 __pycache__
+.vscode

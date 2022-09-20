@@ -1,0 +1,6 @@
+{
+    "verbose": true,
+    "level":"m2",
+    "folder":"tests/output",
+    "output":"tests/output/ics"
+}
