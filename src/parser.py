@@ -3,15 +3,10 @@ import sys, getopt
 from lib.environnement import Environnement
 from lib.pdf import Metadata, Pdf
 
-# http://pymotw.com/2/getopt/
-
-OS_VAR = {'URL':os.getenv('URL')
-          , 'VERBOSE':os.getenv('URL'),}
-
 VERSION = '1.0.0'
 
-ENV: dict = Environnement.get_parametters()
-DATA: dict = Environnement.get_data()
+ENV = Environnement.get_parametters()
+DATA = Environnement.get_data()
 
 def version(): 
    print(VERSION)
@@ -20,13 +15,25 @@ def help():
    print("Help")
    
 def parse():
-   print(DATA)
    if 'URL' not in ENV:
-      ENV['URL'] = DATA['URL'][ENV['LEVEL']]
-   print(ENV)
+      ENV['URL'] = DATA['URL'][ENV['LEVEL'].upper()]
    if ('FORCE' in ENV and not ENV['FORCE']) or Metadata.check_update(ENV['URL'],Pdf.PDF_NAME):
-      print("Parsing pdf into ics format")
+      print("Getting pdf images and words")
+      courses = []
       pdf = Pdf(ENV['URL'] ,"tests/output")
+      print("Processing image and words")
+      pages = pdf.gen_pages()
+      for page in pages:
+         weeks = page.gen_weeks()
+         for week in weeks:
+            courses = courses + week.gen_courses()
+            week.frame_elements()
+            week.save("tests/output")
+      courses.sort(key=lambda x: x.begin)
+      for c in courses:
+         print(c)
+            
+         
    else:
       print("Skiping, downloaded pdf is older than remote pdf, use --force to ignore that verification")
 

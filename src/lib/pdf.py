@@ -14,64 +14,95 @@ from pdfminer.layout import LTTextBoxHorizontal
 
 from lib.geometry import Area, AxeType, Point, Range
 from lib.image import Image
+from lib.time import Time
+from lib.week import Week
 from lib.words import Words
 
 class Pdf:
     PDF_NAME = 'edt.pdf'
     PAGE_NAME = 'page'
+    MARGIN = Area(Point(0,0),Point(20,56))
     
     def __init__(self, url: str, temp_dir: str) -> None:
         self.temp_dir: str = temp_dir
         self.file: str = f'{temp_dir}/{self.PDF_NAME}'
         request.urlretrieve(url,self.file)
-        self.pages =  pdf2image.convert_from_path(self.file,200)
+        self.pdf_pages =  pdf2image.convert_from_path(self.file,200)
         self.__save()
-        self.images = []
-        for i in range(0,len(self)):
-            self.images.append(Image(f'{self.temp_dir}/{self.PAGE_NAME}{i}.jpg', Area(Point(0,0),Point(20,56))))
-        self.text = self.__get_file_words()
     
     def __save(self) -> None:
-        for i, p in enumerate(self.pages):
+        for i, p in enumerate(self.pdf_pages):
             p.save(f'{self.temp_dir}/{self.PAGE_NAME}{i}.jpg',"JPEG")
-            
-    def get_word(self, page: int) -> Words:
-        return self.text[page]
     
-    def __get_file_words(self) -> ArrayType:
-        pages_words = []
+    def gen_pages(self) -> ArrayType:
+        pages = [] 
         with open(self.file, "rb") as file:
             rsrcmgr = PDFResourceManager()
             laparams = LAParams()
             device = PDFPageAggregator(rsrcmgr, laparams=laparams)
             interpreter = PDFPageInterpreter(rsrcmgr, device)
-            
-            for i, page in enumerate(PDFPage.get_pages(file)):
-                pages_words.append(Words())
-                interpreter.process_page(page)
-                layout = device.get_result()
-                area: Area = self.images[i].area
-                for element in layout:
-                    if isinstance(element, LTTextBoxHorizontal):
-                        for text_line in element._objs:
-                            t = tuple(e*(200/72) for e in text_line.bbox)
-                            a = Area(Point(area.h() - t[0], area.w() - t[1]), Point(area.h() - t[2], area.w() - t[3]), content=text_line.get_text().strip())
-                            pages_words[i].add(a)
-        return pages_words
+            for page_number, page in enumerate(PDFPage.get_pages(file)):
+                image = Image(f'{self.temp_dir}/{self.PAGE_NAME}{page_number}.jpg')
+                words = self.__gen_words(image.area, interpreter, device, page)
+                page = Page(image, words, page_number)
+                pages.append(page)
+                # page.frame_words()
+                page.save('tests/output')
+        return pages
+                
+    def __gen_words(self, area: Area, interpreter: PDFPageInterpreter, device: PDFPageAggregator, page: PDFPage) -> ArrayType:          
+        words = Words()
+        interpreter.process_page(page)
+        layout = device.get_result()
+        for element in layout:
+            if isinstance(element, LTTextBoxHorizontal):
+                for text_line in element._objs:
+                    t = tuple(e*(200/72) for e in text_line.bbox)
+                    a = Area(Point(int(t[0]),int(area.h() - t[3])), Point(int(t[2]),int(area.h() - t[1])), content=text_line.get_text().strip())
+                    words.add(a)
+        return words
     
     def __len__(self) -> int:
-        return len(self.pages)
+        return len(self.pdf_pages)
 
 class Page:
     __AVG_WEEK = 300
     __RANGE_WEEK = Range(1900, 2200, AxeType.ABSCISSA)
     
-    def __init__(self, image: Image , words: Words) -> None:
+    def __init__(self, image: Image , words: Words, id: int) -> None:
         self.image = image
+        self.id = id
         self.words = words
+        self.times = self.__gen_week_time()
+
+    def __gen_week_time(self) -> ArrayType:
+        times = Words(words=self.words, pattern=Time.REGEX_WEEK, remove=True)
+        for t in times.list:
+            t.content = Time(t.content)
+        return times
+            
+    def gen_weeks(self) -> ArrayType:
+        weeks = []
+        coordinate = self.image.find_contours(False, False, self.__RANGE_WEEK, self.__AVG_WEEK)
+        for c in coordinate:
+            r: Range = c.to_range(AxeType.ORDINATE)
+            for t in self.times.list:
+                if r.in_bound(t):
+                    time: Time = t.content
+            image = self.image.sub(c)
+            week_word = Words(words=self.words, area=c)
+            week_word.change_origin(c.p1)
+            week = Week(image, week_word, time)
+            weeks.append(week)
+            week.save('tests/output')
+        return weeks
+
+    def frame_words(self) -> None:
+        for a in self.words.list:
+            self.image.frame(a)
     
-    def get_weeks(self) -> ArrayType:
-        weeks_coord = self.image.find_contours(False, False, self.__AVG_WEEK, self.__RANGE_WEEK)
+    def save(self, path):
+        self.image.save(path, f'page-{self.id}')
         
 
 class Metadata:
