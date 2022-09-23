@@ -2,7 +2,7 @@ import os
 import json
 
 class Environnement:
-   VARIABLES = ['URL', 'LEVEL', 'FOLDER', 'OUTPUT', 'VERBOSE', 'FORCE']
+   VARIABLES = ['URL', 'LEVEL', 'DETECT', 'PRINT', 'FOLDER', 'OUTPUT', 'VERBOSE', 'FORCE']
    
    @staticmethod
    def valid_config(file: str = "config.json"):
@@ -36,7 +36,12 @@ class Environnement:
       for v in Environnement.VARIABLES:
          value =  os.getenv(v)
          if value is not None:
-            ENV[v] = value
+            if value.lower() == 'true':
+               ENV[v] = True
+            elif value.lower() == 'false':
+               ENV[v] = False
+            else:
+               ENV[v] = value
       return ENV
 
    @staticmethod

@@ -1,5 +1,6 @@
 from array import ArrayType
 import datetime
+import shutil
 import time
 import pdf2image
 from urllib import request
@@ -18,6 +19,36 @@ from lib.time import Time
 from lib.week import Week
 from lib.words import Words
 
+class Metadata:
+    __TIMESTR = '%a, %d %b %Y %X GMT'
+    
+    @staticmethod
+    def is_local(url: str):
+        url_parsed = urlparse(url)
+        if url_parsed.scheme in ('file', ''): # Possibly a local file
+            return os.path.exists(url_parsed.path)
+        return False
+
+    @staticmethod
+    def check_update(source: str, destination: str, file_name: str) -> bool:
+        if not os.path.exists(f'{destination}/{file_name}'):
+            return True
+        if Metadata.is_local(source):
+            return Metadata.time_local(source) > Metadata.time_local(f'{destination}/{file_name}')        
+        else:
+            return Metadata.time_remote(source) > Metadata.time_local(f'{destination}/{file_name}') 
+
+    @staticmethod
+    def time_remote(url: str) -> datetime:
+        request = requests.get(url)
+        header = request.headers['last-modified']
+        return datetime.datetime.strptime(header,Metadata.__TIMESTR)
+    
+    @staticmethod
+    def time_local(path: str) -> datetime:
+        timestamp = time.strftime(Metadata.__TIMESTR,time.gmtime(os.path.getmtime(path)))
+        return datetime.datetime.strptime(timestamp,Metadata.__TIMESTR)
+
 class Pdf:
     PDF_NAME = 'edt.pdf'
     PAGE_NAME = 'page'
@@ -26,13 +57,19 @@ class Pdf:
     def __init__(self, url: str, temp_dir: str) -> None:
         self.temp_dir: str = temp_dir
         self.file: str = f'{temp_dir}/{self.PDF_NAME}'
-        request.urlretrieve(url,self.file)
+        self.__download(url)
         self.pdf_pages =  pdf2image.convert_from_path(self.file,200)
         self.__save()
     
     def __save(self) -> None:
         for i, p in enumerate(self.pdf_pages):
             p.save(f'{self.temp_dir}/{self.PAGE_NAME}{i}.jpg',"JPEG")
+
+    def __download(self, url: str):
+        if Metadata.is_local(url):
+            shutil.copyfile(url, self.file)
+        else:
+            request.urlretrieve(url, self.file)
     
     def gen_pages(self) -> ArrayType:
         pages = [] 
@@ -46,9 +83,12 @@ class Pdf:
                 words = self.__gen_words(image.area, interpreter, device, page)
                 page = Page(image, words, page_number)
                 pages.append(page)
-                # page.frame_words()
-                page.save('tests/output')
         return pages
+        
+    def del_pages(self):
+        for page_number in range(0,len(self)):
+            os.remove(f'{self.temp_dir}/{self.PAGE_NAME}{page_number}.jpg')
+
                 
     def __gen_words(self, area: Area, interpreter: PDFPageInterpreter, device: PDFPageAggregator, page: PDFPage) -> ArrayType:          
         words = Words()
@@ -94,45 +134,11 @@ class Page:
             week_word.change_origin(c.p1)
             week = Week(image, week_word, time)
             weeks.append(week)
-            week.save('tests/output')
         return weeks
 
     def frame_words(self) -> None:
         for a in self.words.list:
             self.image.frame(a)
     
-    def save(self, path):
+    def save(self, path: str):
         self.image.save(path, f'page-{self.id}')
-        
-
-class Metadata:
-    __TIMESTR = '%a, %d %b %Y %X GMT'
-    
-    @staticmethod
-    def is_local(url):
-        url_parsed = urlparse(url)
-        if url_parsed.scheme in ('file', ''): # Possibly a local file
-            return os.path.exists(url_parsed.path)
-        return False
-
-    @staticmethod
-    def check_update(source, destination) -> bool:
-        if not os.path.exists(destination):
-            return True
-        if Metadata.is_local(source):
-            return Metadata.time_local(source) > Metadata.time_local(destination)        
-        else:
-            return Metadata.time_remote(source) > Metadata.time_local(destination) 
-
-    @staticmethod
-    def time_remote(url) -> datetime:
-        request = requests.get(url)
-        header = request.headers['last-modified']
-        return datetime.datetime.strptime(header,Metadata.__TIMESTR)
-    
-    @staticmethod
-    def time_local(path) -> datetime:
-        timestamp = time.strftime(Metadata.__TIMESTR,time.gmtime(os.path.getmtime(path)))
-        return datetime.datetime.strptime(timestamp,Metadata.__TIMESTR)
-        
-    

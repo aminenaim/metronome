@@ -54,7 +54,7 @@ class Week:
     
     def __get_id(self) -> int:
         week_id = Words(words=self.words, pattern=self.REGEX_WEEK_ID, remove=True)
-        if week_id != 0:
+        if week_id != 0 and len(week_id.list) != 0:
             return int(week_id.list[0].content)
         else:
             return 0 # week unknown
@@ -74,7 +74,7 @@ class Week:
                 if c1 != c2 and c1.contain(c2):
                     overlapping.append(c2)
         for o in overlapping:
-            classes.remove(o)
+                classes.remove(o)
         return classes
     
     def gen_courses(self) -> ArrayType:
@@ -134,7 +134,11 @@ class Course:
     def __get_content(self, course_area: Area, group: Group):
         search_location = [self.__REGEX_LOCATION.search(e).group() for e in course_area.content if self.__REGEX_LOCATION.search(e)]
         for l in search_location:
-            course_area.content.remove(l)
+            if l in course_area.content:
+                course_area.content.remove(l)
+            else:
+                for ca in course_area.content:
+                    ca.replace(l,'')
         location = "".join(search_location)
         if len(course_area.content) == 0:
             return 'Unknown','',location

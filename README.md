@@ -1,0 +1,1 @@
+Require poppler-utils package for pdf2image python module

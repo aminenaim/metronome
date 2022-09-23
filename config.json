@@ -1,6 +1,8 @@
 {
     "verbose": true,
-    "level":"m2",
-    "folder":"tests/output",
-    "output":"tests/output/ics"
+    "level":"M2",
+    "folder":"output",
+    "output":"output/ics",
+    "detect": true,
+    "force": true
 }

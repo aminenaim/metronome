@@ -2,6 +2,16 @@
     "url": {
         "L3":"https://stri.fr/Gestion_STRI/TAV/L3/EDT_STRI1A_L3IRT.pdf",
         "M1":"https://stri.fr/Gestion_STRI/TAV/M1/EDT_STRI2A_M1RT_TAV.pdf",
-        "M2":"https://stri.fr/Gestion_STRI/TAV/M2/EDT_STRI3A_M2STRI_TAV.pdf"
+        "M2":"https://stri.fr/Gestion_STRI/TAV/M2/EDT_STRI3A_M2STRI_TAV.pdf",
+        "TEST-L3-1":"tests/schedules/EDT_STRI1A_L3IRT1.pdf",
+        "TEST-L3-2":"tests/schedules/EDT_STRI1A_L3IRT2.pdf",
+        "TEST-L3-3":"tests/schedules/EDT_STRI1A_L3IRT3.pdf",
+        "TEST-L3-4":"tests/schedules/EDT_STRI1A_L3IRT3.pdf",
+        "TEST-M1-1":"tests/schedules/EDT_STRI2A_M1RT1.pdf",
+        "TEST-M2-1":"tests/schedules/EDT_STRI3A_M2STRI1.pdf",
+        "TEST-M2-2":"tests/schedules/EDT_STRI3A_M2STRI2.pdf",
+        "TEST-M2-3":"tests/schedules/EDT_STRI3A_M2STRI3.pdf",
+        "TEST-M2-4":"tests/schedules/EDT_STRI3A_M2STRI4.pdf",
+        "TEST-M2-5":"tests/schedules/EDT_STRI3A_M2STRI5.pdf"
     }
 }
