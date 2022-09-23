@@ -40,17 +40,24 @@ class Week:
         hours.list.sort(key=lambda x: x.p1.x)
         for i in range(0,len(hours.list) - 1): # match right hour border with the next hour
             hours.list[i].p2.x = hours.list[i + 1].p1.x - 1
-        hours.last().p2.x = margin.b - 3 # match last hour with the border
         hours.add(Area(p1=Point(margin.a + 3, hours.first().y1()), p2=Point(hours.first().x1() - 1, hours.first().y2()), content=hours.first().content - 1),0) # add first hour (7h)
+        self.__fix_last_hour(hours, margin)
         return hours
+
+    def __fix_last_hour(self, hours: Words, margin: Range):
+        hours.last().p2.x = margin.b - 3 # match last hour with the border
+        last = hours.last()
+        reference = hours.list[len(hours.list) - 2] # we take the second to last hour as reference
+        if abs(reference.w() - last.w()) > abs(reference.w()/2 - last.w()): #not full time
+            last.p2.x = last.p2.x * 2
     
     def __get_time_axe(self) -> Axe:
         time_axe = Axe()
         for hour in self.hours.list:
             for i in range(0,4): # cut hours in quarters
                 time_axe.add(hour.x1() + (hour.w()/4)*i,timedelta(hours=hour.content, minutes=i*15))
-        time_axe.add(self.hours.last().x2(),timedelta(hours=self.hours.last().content + 1, minutes=i*15))
-        return time_axe
+        time_axe.add(self.hours.last().x2(),timedelta(hours=self.hours.last().content + 1, minutes=0))
+        return time_axe        
     
     def __get_id(self) -> int:
         week_id = Words(words=self.words, pattern=self.REGEX_WEEK_ID, remove=True)
@@ -68,6 +75,10 @@ class Week:
                     frame.content.append(word.content)
             if len(frame.content) != 0: # remove frame without content
                 classes.append(frame)
+            self.__remove_overlapping(classes)
+        return classes
+
+    def __remove_overlapping(self, classes):
         overlapping = []
         for c1 in classes: # remove overlapping frames
             for c2 in classes:
@@ -75,7 +86,7 @@ class Week:
                     overlapping.append(c2)
         for o in overlapping:
                 classes.remove(o)
-        return classes
+        
     
     def gen_courses(self) -> ArrayType:
         courses = []
