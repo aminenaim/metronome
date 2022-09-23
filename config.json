@@ -1,6 +1,6 @@
 {
     "verbose": true,
-    "level":"M2",
+    "level":"TEST-L3-2",
     "folder":"output",
     "output":"output/ics",
     "detect": true,

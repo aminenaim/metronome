@@ -9,7 +9,7 @@ from lib.words import Words
 
 
 class Week:
-    REGEX_WEEK_ID = re.compile(r'^((\d)|([0-4]\d)|(5[0-3]))$')
+    REGEX_WEEK_ID = re.compile(r'^[Ss]?((\d)|([0-4]\d)|(5[0-3]))$')
     def __init__(self, image: Image , words: Words, time: Time) -> None:
         self.image = image
         self.words = words
@@ -55,7 +55,7 @@ class Week:
     def __get_id(self) -> int:
         week_id = Words(words=self.words, pattern=self.REGEX_WEEK_ID, remove=True)
         if week_id != 0 and len(week_id.list) != 0:
-            return int(week_id.list[0].content)
+            return int(re.sub(r'[Ss]','',week_id.list[0].content))
         else:
             return 0 # week unknown
     
