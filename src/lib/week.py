@@ -3,18 +3,20 @@ from datetime import timedelta
 from enum import Enum
 import re
 from lib.geometry import Area, Axe, AxeType, Point, Range
-from lib.image import Image
+from lib.image import Color, Image
 from lib.time import Time
 from lib.words import Words
 
 
 class Week:
+    __RANGE_CLASS = Range(100,1000,AxeType.ABSCISSA)
+    
     REGEX_WEEK_ID = re.compile(r'^[Ss]?((\d)|([0-4]\d)|(5[0-3]))$')
     def __init__(self, image: Image , words: Words, time: Time) -> None:
         self.image = image
         self.words = words
         self.time = time
-        frames = self.image.find_contours(True, True, Range(100,1000,AxeType.ABSCISSA))
+        frames = self.image.find_contours(True, True, self.__RANGE_CLASS)
         
         self.days = self.__get_day(frames)
         self.hours = self.__get_hour(Range(image.area.x1(),image.area.x2(), AxeType.ABSCISSA))
@@ -86,12 +88,13 @@ class Week:
                     overlapping.append(c2)
         for o in overlapping:
                 classes.remove(o)
-        
     
     def gen_courses(self) -> ArrayType:
         courses = []
         for c in self.classes:
-            courses.append(Course(self.time_axe, c, self.days, self.time))
+            sub_img = self.image.sub(c, False)
+            yellow_percent = sub_img.percent_color(Color.YELLOW, False)
+            courses.append(Course(self.time_axe, c, self.days, self.time, yellow_percent))
         return courses
         
     def frame_words(self) -> None:
@@ -118,14 +121,16 @@ class Group(Enum):
 class Course:
     __REGEX_LOCATION = re.compile(r'[a-z-A-Z]\d-.*|Amphi .*|.*Zoom|.*ZOOM')
     __REGEX_TEACHER = re.compile(r'( \([A-Z]{2,3}\)$)|( \([A-Z]{2,3}\/[A-Z]{2,3}\)$)')
+    __PERCENT_YELLOW_EXAM = 10
     
-    def __init__(self, hour_axe: Axe, course_area: Area, days: Words, week_time: Time) -> None:
+    def __init__(self, hour_axe: Axe, course_area: Area, days: Words, week_time: Time, yellow_percent: int) -> None:
         day = self.__get_day(days, course_area)
 
         self.begin = week_time.get_time(hour=hour_axe.closest(course_area.x1()), day=day.content, timezone="Europe/Paris")
         self.end = week_time.get_time(hour=hour_axe.closest(course_area.x2()), day=day.content, timezone="Europe/Paris")
         self.group = self.__get_group(day, course_area)
         self.name, self.teacher, self.location = self.__get_content(course_area, self.group)
+        self.exam = yellow_percent >= self.__PERCENT_YELLOW_EXAM
         
     def __get_day(self, days: Words, course_area: Area) -> Area:
         middle = course_area.middle(AxeType.ORDINATE)
@@ -164,4 +169,4 @@ class Course:
         return name, teacher, location
     
     def __str__(self):
-        return f'{self.name} : B[{self.begin}] - E[{self.end}] - L[{self.location}] - T[{self.teacher}]] - G[{self.group}]'
+        return f'{self.name} : B[{self.begin}] - E[{self.end}] - L[{self.location}] - T[{self.teacher}]] - G[{self.group}] E[{self.exam}]'

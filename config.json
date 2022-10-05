@@ -1,8 +1,9 @@
 {
     "verbose": true,
-    "level":"TEST-L3-1",
+    "level":"M2",
     "folder":"output",
     "output":"output/ics",
     "detect": true,
-    "force": true
+    "force": true,
+    "print": true
 }

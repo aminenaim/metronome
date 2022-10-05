@@ -1,11 +1,17 @@
 from array import ArrayType
 import copy
+from enum import Enum
 import cv2
 import numpy as np
 from lib.geometry import Area, AxeType, Point, Range
 from lib.words import Words
 
+class Color(Enum):
+    YELLOW = [[0, 100, 100], [0, 255, 255]] # BGR
+    BLACK = [100,255] # BGR
+
 class Image:
+    
     def __init__(self, path: str = None, margin: Area = None, img = None) -> None:
         assert path is not None or img is not None, "You need to add at least one source (path or img)"
         self.path = path
@@ -37,13 +43,31 @@ class Image:
                     coordinates = coordinates + area.slice(nb_slices, AxeType.ORDINATE)
         return coordinates
     
+    def percent_color(self, color: Color, gray: bool):
+        total = (self.area.x2() - self.area.x1()) * (self.area.y2() - self.area.y1())
+        count = 0
+        img = self.gray if gray else self.color
+        for y in range(self.area.y1(), self.area.y2()):
+            for x in range(self.area.x1(), self.area.x2()):
+                if  (self.__in_range(gray, img[y][x], color)):
+                    count+=1
+        return (count*100)/total
+    
+    @classmethod
+    def __in_range(cls, gray: bool, value, ref):
+        if gray: # Gray 1 value
+            return ref.value[0] <= value and value <= ref.value[1]
+        else: # BGR 3 values
+            return (ref.value[0][0] <= value[0] and value[0] <= ref.value[1][0] and
+                    ref.value[0][1] <= value[1] and value[1] <= ref.value[1][1] and
+                    ref.value[0][2] <= value[2] and value[2] <= ref.value[1][2])
+    
     def sub(self, margin: Area = Area(Point(0,0),Point(0,0)), copy_img: bool = True) -> 'Image':
         if copy_img:
             return Image(margin=Area(margin.p1, margin.p2), img=copy.deepcopy(self.color))
         else:
             return Image(margin=Area(margin.p1, margin.p2), img=self.color)
 
-    
     def show(self, title: str = "", color: bool = True) -> None:
         cv2.imshow(title,self.color if color else self.gray)
         cv2.waitKey(0)

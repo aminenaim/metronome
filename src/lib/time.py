@@ -14,16 +14,21 @@ class Time:
         assert self.REGEX_WEEK.match(value), f"Wrong format \"{value}\", must match {self.REGEX_WEEK.pattern}"
         day, month = re.split("/", value)
         assert month in self.MONTHS, f"Month value \"{month}\", isn't known"
-        
         today: datetime = datetime.today()
-        if today <= datetime(day = int(day), month = self.MONTHS[month], year=today.year):
-            year = today.year
-        else:
-            year = today.year - 1
-        self.value = datetime(day = int(day), month = self.MONTHS[month], year=year)
+        day = int(day)
+        month = self.MONTHS[month]
+        year = self.calcul_year(today, month)
+        self.value = datetime(day = day, month = month, year=year)
     
     def get_time(self, day: timedelta, hour: timedelta, timezone: str = "") -> arrow:
         return arrow.get(self.value + day + hour, tz.gettz(timezone))
     
+    def calcul_year(self, today: datetime, month: int):
+        if month < 7 and today.month > 7:
+            return today.year + 1
+        if month > 7 and today.month < 7:
+            return today.year - 1
+        return today.year
+        
     def __str__(self) -> str:
         return str(self.value)
