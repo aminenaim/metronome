@@ -2,13 +2,13 @@ import os
 import json
 
 class Environnement:
-   VARIABLES = ['URL', 'LEVEL', 'DETECT', 'PRINT', 'FOLDER', 'OUTPUT', 'VERBOSE', 'FORCE']
+   VARIABLES = ['URL', 'LEVEL', 'DETECT', 'PRINT', 'FOLDER', 'OUTPUT', 'FTP', 'FORCE', 'TIME']
    
    @staticmethod
-   def valid_config(file: str = "config.json"):
-      if not os.path.exists(os.getcwd() + '/' + file):
+   def valid_config(file: str = "/config/config.json"):
+      if not os.path.exists(file):
          return True
-      with open(os.path.exists(os.getcwd() + '/' + file)) as jsonFile:
+      with open(os.path.exists(file)) as jsonFile:
          try:
             json.load(jsonFile)
             jsonFile.close()
@@ -19,10 +19,10 @@ class Environnement:
    @staticmethod
    def get_config(file: str):
       CONFIG = {}
-      if not os.path.exists(os.getcwd() + '/' + file):
+      if not os.path.exists(file):
          return CONFIG
       else:
-         with open(os.getcwd() + '/' + file) as json_file:
+         with open(file) as json_file:
             json_object = json.load(json_file)
             json_file.close()
             for key in json_object:
@@ -45,7 +45,7 @@ class Environnement:
       return ENV
 
    @staticmethod
-   def get_parametters(file: str = "config.json"):
+   def get_parametters(file: str = "/config/config.json"):
       ENV = Environnement.get_env()
       CONFIG = Environnement.get_config(file)
       PARAMETTERS = CONFIG.copy()
@@ -53,12 +53,12 @@ class Environnement:
       return PARAMETTERS
    
    @staticmethod
-   def get_data(file: str = "data.json"):
+   def get_data(file: str = "/config/data.json"):
       DATA = {}
-      if not os.path.exists(os.getcwd() + '/' + file):
+      if not os.path.exists(file):
          return DATA
       else:
-         with open(os.getcwd() + '/' + file) as json_file:
+         with open(file) as json_file:
             json_object = json.load(json_file)
             json_file.close()
             for key in json_object:

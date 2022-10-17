@@ -11,7 +11,6 @@ class Color(Enum):
     BLACK = [100,255] # BGR
 
 class Image:
-    
     def __init__(self, path: str = None, margin: Area = None, img = None) -> None:
         assert path is not None or img is not None, "You need to add at least one source (path or img)"
         self.path = path
@@ -77,8 +76,13 @@ class Image:
         for a in words.list:
             cv2.rectangle(self.color, (a.p1.x,a.p1.y), (a.p2.x,a.p2.y), (255,255,255), -1)
     
-    def frame(self, area: Area, color=(0,0,255)) -> None:
-        cv2.rectangle(self.color, area.p1.tuple(), area.p2.tuple(), color, 2)
+    def frame(self, area: Area, color=(0,0,255), size=2) -> None:
+        if isinstance(color, int):
+            cv2.rectangle(self.gray, area.p1.tuple(), area.p2.tuple(), color, size)
+        else:
+            cv2.rectangle(self.color, area.p1.tuple(), area.p2.tuple(), color, size)
+            
+        cv2.rectangle(self.color, area.p1.tuple(), area.p2.tuple(), color, size)
     
     def save(self, path: str, name: str, color: bool = True) -> None:
         cv2.imwrite(f"{path}/{name}.jpg", self.color if color else self.gray)

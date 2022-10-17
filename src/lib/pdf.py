@@ -114,6 +114,7 @@ class Page:
         self.id = id
         self.words = words
         self.times = self.__gen_week_time()
+        self.week_coordinate = self.image.find_contours(False, False, self.__RANGE_WEEK, self.__AVG_WEEK)
 
     def __gen_week_time(self) -> ArrayType:
         times = Words(words=self.words, pattern=Time.REGEX_WEEK, remove=True)
@@ -123,22 +124,26 @@ class Page:
             
     def gen_weeks(self) -> ArrayType:
         weeks = []
-        coordinate = self.image.find_contours(False, False, self.__RANGE_WEEK, self.__AVG_WEEK)
-        for c in coordinate:
+        for c in self.week_coordinate:
             r: Range = c.to_range(AxeType.ORDINATE)
             for t in self.times.list:
                 if r.in_bound(t):
                     time: Time = t.content
             image = self.image.sub(c)
+            # make sure there is contour around the week
+            image.frame(image.area, color=(0,0,0), size=5)
+            image.frame(image.area, color=0, size=5)
             week_word = Words(words=self.words, area=c)
             week_word.change_origin(c.p1)
             week = Week(image, week_word, time)
             weeks.append(week)
         return weeks
 
-    def frame_words(self) -> None:
+    def frame_elements(self) -> None:
         for a in self.words.list:
             self.image.frame(a)
+        for a in self.week_coordinate:
+            self.image.frame(a, (0,255,0))
     
     def save(self, path: str):
         self.image.save(path, f'page-{self.id}')

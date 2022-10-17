@@ -1,0 +1,12 @@
+---
+version: "3.9"
+services:
+  jackiebot:
+    image: jackiebot:latest
+    container_name: jackiebot
+    network_mode: host
+    environment:
+      TIME: 3600
+    volumes:
+      - /mnt/c/Git/jackiebot/config:/config
+    restart: "no"
