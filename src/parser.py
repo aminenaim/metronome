@@ -7,26 +7,23 @@ from lib.week import Group, Week
 from ics import Calendar, Event
 
 VERSION = '1.0.0'
-HELP = ("This script parse the well formed and very useful (lol) STRI pdf\n"
+HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
         "\n"
         "Options:\n"
         "   -f, --folder=[FOLDER]   temp folder used by the script\n"
         "   -o, --output=[OUTPUT]   output folder where ics are generated\n"
+        "   -c, --config=[CONFIG]   config folder where config.json and data.json is located\n"
         "   -u, --url=[URL]         url of edt that must be parsed (when -l, --level is not provided)\n"
         "   -l, --level=[LEVELS]    levels that must be parsed (l3, m1, m2), must be seperated by comma\n"
         "   -d, --detect            show detected element of pdf\n"
         "   -p, --print             print classes genarated in stdout\n"
-        "   -t, --time=[TIME]       use to loop each for the defined seconds"
+        "   -t, --time=[TIME]       use to loop each for the defined seconds\n"
         "   --force                 force parsing of pdf even if it's the same than remote\n"
         "   --ftp_test              test the ftp connexion\n"
         "   -h, --help              show helper for this script\n"
         "   --version               show version of script\n"
         "\n"
         "Runs on python3 with dependences listed on requirements.txt\n")
-
-
-ENV = Environnement.get_parametters()
-DATA = Environnement.get_data()
 
 def version(): 
    print(VERSION)
@@ -69,17 +66,19 @@ def process_edt(level: str, url: str, path: str, output: str):
       print(f"Creating \"{folder}\" folder")
       os.makedirs(folder)
    if ('FORCE' in ENV and ENV['FORCE']) or Metadata.check_update(url, folder, Pdf.PDF_NAME):
-      print(f"{level} : Parsing pdf into images and words")
+      print(f"{level} : Download and convert pdf into inmage and words")
       pdf = Pdf(url ,folder)
-      print(f"{level} : Processing image and words")
+      print(f"{level} : Processing and parsing images and words")
       pages = pdf.gen_pages()
+      print(f"{level} : Get courses")
       courses = gen_courses(folder, pages)
+      print(f"{level} : Generate ics callendars")
       gen_calendars(courses, level, output)
       if ('FORCE' in ENV):
-         print(f"{level} : Sending files trought ftp")
+         print(f"{level} : Sending files through ftp")
          send(level, output)
    else:
-      print("Skiping, downloaded pdf is older than remote pdf, use --force to ignore that verification")
+      print("Skiping, local pdf is older than remote pdf, use --force to ignore that verification")
 
 def gen_courses(folder: str, pages: ArrayType):
    courses = []
@@ -145,30 +144,32 @@ def print_courses(courses):
       print(c)
 
 def main(argv):
-   global ENV
-   
-   action = loop_time if ('TIME' in ENV) else parse
-   options, _ = getopt.getopt(argv, 'f:o:u:l:t:dpvh', ['folder=','output=', 'url=', 'level=', 'time=', 'detect', 'print', 'force', 'ftp_test', 'help',  'version'])
+   global ENV, DATA
+   ATTR = {}
+   action = None
+   options, _ = getopt.getopt(argv, 'f:o:c:u:l:t:dpvh', ['folder=','output=', 'config=', 'url=', 'level=', 'time=', 'detect', 'print', 'force', 'ftp_test', 'help',  'version'])
 
    for opt, arg in options:
       if opt in ('-f', '--folder'):
-         ENV['FOLDER'] = arg
-      if opt in ('-o', '--output'):
-         ENV['OUTPUT'] = arg
+         ATTR['FOLDER'] = arg
+      elif opt in ('-o', '--output'):
+         ATTR['OUTPUT'] = arg
+      elif opt in ('-c', '--config'):
+         ATTR['CONFIG'] = arg
       elif opt in ('-u', '--url'):
-         ENV['URL'] = arg
+         ATTR['URL'] = arg
       elif opt in ('-l', '--level'):
-         ENV['LEVEL'] = arg
+         ATTR['LEVEL'] = arg
       elif opt in ('-t', '--time'):
-         action = help
+         action = loop_time
       elif opt in ('-d', '--detect'):
-         ENV['DETECT'] = arg
+         ATTR['DETECT'] = arg
       elif opt in ('-p', '--print'):
-         ENV['PRINT'] = True
+         ATTR['PRINT'] = True
       elif opt in ('--force'):
-         ENV['FORCE'] = True
+         ATTR['FORCE'] = True
       elif opt in ('--ftp_test'):
-         ENV['TIME'] = True
+         ATTR['TIME'] = True
          action = ftp_test
       elif opt in ('-h', '--help'):
          action = help
@@ -177,6 +178,11 @@ def main(argv):
       else:
          print(f"Unknown argument {opt}", file=sys.stderr)
          exit(1)
+   
+   ENV = Environnement.get_parametters(ATTR)
+   DATA = Environnement.get_data(ATTR)
+   if action is None:
+      action = loop_time if ('TIME' in ENV) else parse
    action()
    exit(0)
 

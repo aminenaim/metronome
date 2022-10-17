@@ -1,12 +1,15 @@
-FROM python:3
+FROM python:3.10-slim
 
 WORKDIR /app
 
+COPY ./src .
+COPY ./schema schema/
 COPY requirements.txt ./
-RUN apt-get update
-RUN apt-get install libgl1 poppler-utils -y
+
+
+RUN apt-get update; apt-get install poppler-utils -y; apt-get clean
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./src .
 
-CMD [ "python","-u", "./parser.py" ]
+
+CMD [ "python","-u", "./parser.py", "--config=/config", "--output=/ics", "--folder=/tmp"]

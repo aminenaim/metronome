@@ -3,10 +3,13 @@ version: "3.9"
 services:
   jackiebot:
     image: jackiebot:latest
+    build:
+      context: ./
+      dockerfile: Dockerfile
     container_name: jackiebot
     network_mode: host
     environment:
-      TIME: 3600
+      TIME: 900 # 15 min check
     volumes:
-      - /mnt/c/Git/jackiebot/config:/config
-    restart: "no"
+      - /path/to/config/folder:/config
+    restart: unless-stopped

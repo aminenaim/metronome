@@ -1,11 +1,15 @@
 import os
 import json
+from jsonschema import validate
+
 
 class Environnement:
+   DEFAULT_CONFIG_PATH = "config/"
+   VALIDATION_FOLDER = "schema/"
    VARIABLES = ['URL', 'LEVEL', 'DETECT', 'PRINT', 'FOLDER', 'OUTPUT', 'FTP', 'FORCE', 'TIME']
    
-   @staticmethod
-   def valid_config(file: str = "/config/config.json"):
+   @classmethod
+   def valid_config(cls, file):
       if not os.path.exists(file):
          return True
       with open(os.path.exists(file)) as jsonFile:
@@ -16,22 +20,23 @@ class Environnement:
             return False
          return True
 
-   @staticmethod
-   def get_config(file: str):
+   @classmethod
+   def get_config(cls, file: str):
       CONFIG = {}
       if not os.path.exists(file):
          return CONFIG
       else:
-         with open(file) as json_file:
+         with open(f'{cls.VALIDATION_FOLDER}/config.json') as validation_file, open(file) as json_file:
             json_object = json.load(json_file)
-            json_file.close()
+            validation_json = json.load(validation_file)
+            validate(json_object, validation_json)
             for key in json_object:
                if key.upper() in Environnement.VARIABLES:
                   CONFIG[key] = json_object[key]
          return Environnement.__to_upper(CONFIG)
          
-   @staticmethod
-   def get_env():
+   @classmethod
+   def get_env(cls):
       ENV = {}
       for v in Environnement.VARIABLES:
          value =  os.getenv(v)
@@ -44,29 +49,33 @@ class Environnement:
                ENV[v] = value
       return ENV
 
-   @staticmethod
-   def get_parametters(file: str = "/config/config.json"):
+   @classmethod
+   def get_parametters(cls, ATTR: dict):
+      config_file = ATTR["CONFIG"] if ('CONFIG' in ATTR) else cls.DEFAULT_CONFIG_PATH
       ENV = Environnement.get_env()
-      CONFIG = Environnement.get_config(file)
+      CONFIG = Environnement.get_config(f'{config_file}/config.json')
       PARAMETTERS = CONFIG.copy()
       PARAMETTERS.update(ENV)
+      PARAMETTERS.update(ATTR)
       return PARAMETTERS
    
-   @staticmethod
-   def get_data(file: str = "/config/data.json"):
+   @classmethod
+   def get_data(cls, ATTR: dict):
+      data_file = ATTR["CONFIG"] if ('CONFIG' in ATTR) else cls.DEFAULT_CONFIG_PATH
       DATA = {}
-      if not os.path.exists(file):
+      if not os.path.exists(f'{data_file}/data.json'):
          return DATA
       else:
-         with open(file) as json_file:
+         with open(f'{cls.VALIDATION_FOLDER}/data.json') as validation_file, open(f'{data_file}/data.json') as json_file:
+            validation_json = json.load(validation_file)
             json_object = json.load(json_file)
-            json_file.close()
+            validate(json_object, validation_json)
             for key in json_object:
                DATA[key.upper()] = json_object[key]
          return Environnement.__to_upper(DATA)
 
-   @staticmethod
-   def __to_upper(dictionary: dict) -> dict:
+   @classmethod
+   def __to_upper(cls, dictionary: dict) -> dict:
       upper_dict = {}
       for k,v in dictionary.items():
          if isinstance(v,dict):
