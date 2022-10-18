@@ -37,10 +37,11 @@ class Metadata:
             return Metadata.time_local(source) > Metadata.time_local(f'{destination}/{file_name}')        
         else:
             return Metadata.time_remote(source) > Metadata.time_local(f'{destination}/{file_name}') 
+            
 
     @staticmethod
     def time_remote(url: str) -> datetime:
-        request = requests.get(url)
+        request = requests.get(url, timeout=60)
         header = request.headers['last-modified']
         return datetime.datetime.strptime(header,Metadata.__TIMESTR)
     

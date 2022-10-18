@@ -1,5 +1,7 @@
 from array import ArrayType
 import os, time, sys, getopt
+import requests
+import urllib
 from lib.environnement import Environnement
 from lib.ftp import ftp_handler
 from lib.pdf import Metadata, Page, Pdf
@@ -65,20 +67,24 @@ def process_edt(level: str, url: str, path: str, output: str):
    if not os.path.exists(folder):
       print(f"Creating \"{folder}\" folder")
       os.makedirs(folder)
-   if ('FORCE' in ENV and ENV['FORCE']) or Metadata.check_update(url, folder, Pdf.PDF_NAME):
-      print(f"{level} : Download and convert pdf into inmage and words")
-      pdf = Pdf(url ,folder)
-      print(f"{level} : Processing and parsing images and words")
-      pages = pdf.gen_pages()
-      print(f"{level} : Get courses")
-      courses = gen_courses(folder, pages)
-      print(f"{level} : Generate ics callendars")
-      gen_calendars(courses, level, output)
-      if ('FORCE' in ENV):
-         print(f"{level} : Sending files through ftp")
-         send(level, output)
-   else:
-      print("Skiping, local pdf is older than remote pdf, use --force to ignore that verification")
+   try: 
+      if ('FORCE' in ENV and ENV['FORCE']) or Metadata.check_update(url, folder, Pdf.PDF_NAME):
+         print(f"{level} : Download and convert pdf into image and words")
+         pdf = Pdf(url ,folder)
+         print(f"{level} : Processing and parsing images and words")
+         pages = pdf.gen_pages()
+         print(f"{level} : Get courses")
+         courses = gen_courses(folder, pages)
+         print(f"{level} : Generate ics callendars")
+         gen_calendars(courses, level, output)
+         if ('FORCE' in ENV):
+            print(f"{level} : Sending files through ftp")
+            send(level, output)
+      else:
+         print("Skiping, local pdf is older than remote pdf, use --force to ignore that verification")
+   except (requests.exceptions.ConnectionError, urllib.error.URLError):
+      print("Connexion error")
+      return
 
 def gen_courses(folder: str, pages: ArrayType):
    courses = []
