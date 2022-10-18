@@ -148,34 +148,18 @@ def main(argv):
    ATTR = {}
    action = None
    options, _ = getopt.getopt(argv, 'f:o:c:u:l:t:dpvh', ['folder=','output=', 'config=', 'url=', 'level=', 'time=', 'detect', 'print', 'force', 'ftp_test', 'help',  'version'])
-
+   assign_map = {'-f':'FOLDER', '--folder':'FOLDER', '-o':'OUTPUT', '--output':'OUTPUT', '-c':'CONFIG', '--config': 'CONFIG', '-u':'URL', '--url':'URL', '-l':'LEVEL', '--level':'LEVEL', '-d':'DETECT', '--detect':'DETECT', '-p':'PRINT', '--print':'PRINT', '--force':'FORCE', '-t':'TIME', '--time':'TIME'}
+   action_map = {'--ftp_test':ftp_test, '-h':help, '--help':help, '--version':version} 
    for opt, arg in options:
-      if opt in ('-f', '--folder'):
-         ATTR['FOLDER'] = arg
-      elif opt in ('-o', '--output'):
-         ATTR['OUTPUT'] = arg
-      elif opt in ('-c', '--config'):
-         ATTR['CONFIG'] = arg
-      elif opt in ('-u', '--url'):
-         ATTR['URL'] = arg
-      elif opt in ('-l', '--level'):
-         ATTR['LEVEL'] = arg
-      elif opt in ('-t', '--time'):
-         action = loop_time
-      elif opt in ('-d', '--detect'):
-         ATTR['DETECT'] = arg
-      elif opt in ('-p', '--print'):
-         ATTR['PRINT'] = True
-      elif opt in ('--force'):
-         ATTR['FORCE'] = True
-      elif opt in ('--ftp_test'):
-         ATTR['TIME'] = True
-         action = ftp_test
-      elif opt in ('-h', '--help'):
-         action = help
-      elif opt == '--version':
-         action = version
-      else:
+      in_maps = False
+      if opt in assign_map.keys():
+         in_maps = True
+         key = assign_map[opt]
+         ATTR[key] = arg
+      elif opt in action_map.keys():
+         in_maps = True
+         action = action_map[opt]
+      if not in_maps:
          print(f"Unknown argument {opt}", file=sys.stderr)
          exit(1)
    
