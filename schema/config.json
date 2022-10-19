@@ -1,7 +1,7 @@
 {
     "type": "object",
     "properties": {
-        "folder": {"type": "string"},
+        "workdir": {"type": "string"},
         "level": {"type": "string"},
         "output": {"type": "string"},
         "url": {"type": "string"},
@@ -21,5 +21,5 @@
             "required": ["host","user","password"]
         }
     },
-    "required": ["output","folder"]
+    "required": ["output","workdir"]
 }

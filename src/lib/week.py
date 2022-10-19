@@ -1,4 +1,3 @@
-from array import ArrayType
 from datetime import timedelta
 from enum import Enum
 import re
@@ -25,7 +24,7 @@ class Week:
         
         self.time_axe = self.__get_time_axe()
         
-    def __get_day(self, frames: ArrayType) -> Words:
+    def __get_day(self, frames: list) -> Words:
         days: Words = Words(words=self.words, pattern=Time.REGEX_DAY, remove=True)
         for day in days.list:
             for frame in frames:
@@ -51,7 +50,7 @@ class Week:
         last = hours.last()
         reference = hours.list[len(hours.list) - 2] # we take the second to last hour as reference
         if abs(reference.w() - last.w()) > abs(reference.w()/2 - last.w()): #not full time
-            last.p2.x = last.p2.x * 2
+            last.p2.x = last.p2.x + last.w()
     
     def __get_time_axe(self) -> Axe:
         time_axe = Axe()
@@ -68,7 +67,7 @@ class Week:
         else:
             return 0 # week unknown
     
-    def __get_classes(self, frames: ArrayType) -> ArrayType:
+    def __get_classes(self, frames: list) -> list:
         classes = []
         for frame in frames:
             frame.content = [] # add words to each class frame
@@ -89,7 +88,7 @@ class Week:
         for o in overlapping:
                 classes.remove(o)
     
-    def gen_courses(self) -> ArrayType:
+    def gen_courses(self) -> list:
         courses = []
         for c in self.classes:
             sub_img = self.image.sub(c, False)

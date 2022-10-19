@@ -1,4 +1,3 @@
-from array import ArrayType
 from enum import Enum
 
 class AxeType(Enum):
@@ -60,7 +59,7 @@ class Area:
         return (self.x1() <= point.x) and (point.x <= self.x2()) and \
                 (self.y1() <= point.y) and (point.y <= self.y2())
     
-    def slice(self, nb_slices: int,  axe: AxeType) -> ArrayType:
+    def slice(self, nb_slices: int,  axe: AxeType) -> list:
         slices = []
         if(axe == AxeType.ABSCISSA):
             for i in range (0,nb_slices):

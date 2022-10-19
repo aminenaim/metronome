@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 
 
-CMD [ "python","-u", "./parser.py", "--config=/config", "--output=/ics", "--folder=/tmp"]
+CMD [ "python","-u", "./parser.py", "--config=/config", "--output=/ics", "--workdir=/tmp"]

@@ -1,4 +1,3 @@
-from array import ArrayType
 from ftplib import FTP, FTP_TLS
 from os import curdir
 import os
@@ -6,7 +5,7 @@ import ssl
 
 
 class ftp_handler:
-    def __init__(self, ftp_ident: ArrayType):
+    def __init__(self, ftp_ident: dict):
         if 'SSL' in ftp_ident and ftp_ident['SSL']:
             context = ssl.create_default_context()
             self.conn = FTP_TLS(context=context)

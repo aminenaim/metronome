@@ -6,7 +6,7 @@ from jsonschema import validate
 class Environnement:
    DEFAULT_CONFIG_PATH = "config/"
    VALIDATION_FOLDER = "schema/"
-   VARIABLES = ['URL', 'LEVEL', 'DETECT', 'PRINT', 'FOLDER', 'OUTPUT', 'FTP', 'FORCE', 'TIME']
+   VARIABLES = ['URL', 'LEVEL', 'DETECT', 'PRINT', 'WORKDIR', 'OUTPUT', 'FTP', 'FORCE', 'TIME']
    
    @classmethod
    def valid_config(cls, file):

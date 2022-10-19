@@ -1,4 +1,3 @@
-from array import ArrayType
 import datetime
 import shutil
 import time
@@ -72,7 +71,7 @@ class Pdf:
         else:
             request.urlretrieve(url, self.file)
     
-    def gen_pages(self) -> ArrayType:
+    def gen_pages(self) -> list:
         pages = [] 
         with open(self.file, "rb") as file:
             rsrcmgr = PDFResourceManager()
@@ -91,7 +90,7 @@ class Pdf:
             os.remove(f'{self.temp_dir}/{self.PAGE_NAME}{page_number}.jpg')
 
                 
-    def __gen_words(self, area: Area, interpreter: PDFPageInterpreter, device: PDFPageAggregator, page: PDFPage) -> ArrayType:          
+    def __gen_words(self, area: Area, interpreter: PDFPageInterpreter, device: PDFPageAggregator, page: PDFPage) -> list:          
         words = Words()
         interpreter.process_page(page)
         layout = device.get_result()
@@ -117,13 +116,13 @@ class Page:
         self.times = self.__gen_week_time()
         self.week_coordinate = self.image.find_contours(False, False, self.__RANGE_WEEK, self.__AVG_WEEK)
 
-    def __gen_week_time(self) -> ArrayType:
+    def __gen_week_time(self) -> list:
         times = Words(words=self.words, pattern=Time.REGEX_WEEK, remove=True)
         for t in times.list:
             t.content = Time(t.content)
         return times
             
-    def gen_weeks(self) -> ArrayType:
+    def gen_weeks(self) -> list:
         weeks = []
         for c in self.week_coordinate:
             r: Range = c.to_range(AxeType.ORDINATE)

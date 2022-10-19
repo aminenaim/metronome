@@ -1,4 +1,3 @@
-from array import ArrayType
 import copy
 from enum import Enum
 import cv2
@@ -22,7 +21,7 @@ class Image:
         h, w, _ = self.color.shape
         self.area = Area(Point(0,0), Point(w,h))
         
-    def find_contours(self, dilate: bool = False, all: bool = True, width: Range = None, avg_height: int = None) -> ArrayType:
+    def find_contours(self, dilate: bool = False, all: bool = True, width: Range = None, avg_height: int = None) -> list:
         _, modified_image = cv2.threshold(self.gray, 130, 255, cv2.THRESH_BINARY_INV)
         mode = cv2.RETR_TREE if all else cv2.RETR_EXTERNAL
         if dilate:

@@ -1,4 +1,3 @@
-from array import ArrayType
 from re import Pattern
 from lib.geometry import Area
 import copy
@@ -28,14 +27,14 @@ class Words:
     def first(self) -> Area:
         return self.list[0]
     
-    def contained(self, area: Area, remove: bool = False) -> ArrayType:
+    def contained(self, area: Area, remove: bool = False) -> list:
         res = [copy.deepcopy(a) for a in self.list if area.contain(a)]
         if remove:
             for a in res:
                 self.list.remove(a)
         return res
 
-    def match(self, pattern:  Pattern, remove: bool = False) -> ArrayType:
+    def match(self, pattern:  Pattern, remove: bool = False) -> list:
         res = [a for a in self.list if pattern.match(a.content)]
         if remove:
             for a in res:

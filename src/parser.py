@@ -1,4 +1,3 @@
-from array import ArrayType
 import os, time, sys, getopt
 import requests
 import urllib
@@ -12,10 +11,9 @@ VERSION = '1.0.0'
 HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
         "\n"
         "Options:\n"
-        "   -f, --folder=[FOLDER]   temp folder used by the script\n"
+        "   -w, --workdir=[WORKDIR]   temp folder used by the script\n"
         "   -o, --output=[OUTPUT]   output folder where ics are generated\n"
         "   -c, --config=[CONFIG]   config folder where config.json and data.json is located\n"
-        "   -u, --url=[URL]         url of edt that must be parsed (when -l, --level is not provided)\n"
         "   -l, --level=[LEVELS]    levels that must be parsed (l3, m1, m2), must be seperated by comma\n"
         "   -d, --detect            show detected element of pdf\n"
         "   -p, --print             print classes genarated in stdout\n"
@@ -27,13 +25,20 @@ HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
         "\n"
         "Runs on python3 with dependences listed on requirements.txt\n")
 
-def version(): 
+def version():
+   """Print the verison of this script
+   """
    print(VERSION)
    
 def help():
+   """Print the help string 
+   """
    print(HELP)
    
 def ftp_test():
+   """Ftp connexion test provided by the user
+      It also list the files on the current directory
+   """
    ftp_ident = ENV['FTP']
    ftp = ftp_handler(ftp_ident)
    print("FTP Connexion OK")
@@ -41,70 +46,106 @@ def ftp_test():
    ftp.list()
 
 def loop_time():
+   """Loop for forever, with a delay of 'TIME' seconds (with TIME provided by the user through config/env/cli) 
+   """
    delay = int(ENV['TIME'])
    print(f"Starting script, with refresh delay of {delay} sec")
    while(True):
-      parse()
+      processing_levels()
       print(f"Waiting for {delay} sec")
       time.sleep(delay)
    
-def parse():
-   if not os.path.exists(ENV['FOLDER']):
-      print(f"Creating \"{ENV['FOLDER']}\" folder")
-      os.makedirs(ENV['FOLDER'])
-   levels = ENV['LEVEL'].upper().split(',')
+def processing_levels():
+   """Process each level given by the user
+   """
+   workdir, output, urls, levels = ENV['WORKDIR'], ENV['OUTPUT'], DATA['URL'], ENV['LEVEL'].upper().split(',')
+   mkdir_if_not_exists(workdir)
    for l in levels:
-      l = l.replace(" ", "")
-      if l in DATA['URL'].keys():
+      l = l.replace(" ", "") # remove free space
+      if l in urls.keys():
          print(f"Processing {l} pdf")
-         process_edt(l, DATA['URL'][l], ENV['FOLDER'], ENV['OUTPUT'])
+         parsing_edt(l, urls[l], workdir, output)
       else:
-         print(f"{l} not found in data.json", file=sys.stderr)
+         print(f"Level {l} not found in data.json", file=sys.stderr)
          exit(1)
 
-def process_edt(level: str, url: str, path: str, output: str):
-   folder = f"{path}/{level}"
-   if not os.path.exists(folder):
-      print(f"Creating \"{folder}\" folder")
-      os.makedirs(folder)
+def parsing_edt(level: str, url: str, workdir: str, ics_dir: str):
+   """Parse the edt into ics files and send them over ftp
+
+   Args:
+       level (str): level given by the user
+       url (str): edt url of the given level
+       workdir (str): script working directory
+       ics_dir (str): ics output script
+   """
+   level_workdir = f"{workdir}/{level}"
+   mkdir_if_not_exists(level_workdir)
    try: 
-      if ('FORCE' in ENV and ENV['FORCE']) or Metadata.check_update(url, folder, Pdf.PDF_NAME):
+      if edt_need_update(url, level_workdir):
          print(f"{level} : Download and convert pdf into image and words")
-         pdf = Pdf(url ,folder)
+         pdf = Pdf(url ,level_workdir)
          print(f"{level} : Processing and parsing images and words")
          pages = pdf.gen_pages()
          print(f"{level} : Get courses")
-         courses = gen_courses(folder, pages)
+         courses = gen_courses(level_workdir, pages)
          print(f"{level} : Generate ics callendars")
-         gen_calendars(courses, level, output)
-         if ('FORCE' in ENV):
+         gen_calendars(courses, level, ics_dir)
+         if ('FTP' in ENV):
             print(f"{level} : Sending files through ftp")
-            send(level, output)
+            send(level, ics_dir)
       else:
-         print("Skiping, local pdf is older than remote pdf, use --force to ignore that verification")
+         print("Skiping, local pdf is older than remote pdf")
    except (requests.exceptions.ConnectionError, urllib.error.URLError):
       print("Connexion error")
       return
 
-def gen_courses(folder: str, pages: ArrayType):
+def edt_need_update(url : str, level_workdir : str) -> bool:
+   """Define if the edt need an update :
+      - when attribute 'FORCE' is used
+      - when target pdf is newer than the local pdf
+
+   Args:
+       url (str): edt file url
+       level_workdir (str): level working directory
+
+   Returns:
+       bool: True if edt need update, False otherwise
+   """
+   return ('FORCE' in ENV and ENV['FORCE']) or Metadata.check_update(url, level_workdir, Pdf.PDF_NAME)
+
+def gen_courses(level_workdir: str, pages: list) -> list:
+   """Generate the courses from the pdf data
+
+   Args:
+       level_workdir (str): level working directory
+       pages (list): pages object of the edt
+
+   Returns:
+       list: list of the courses generated
+   """
    courses = []
    for page in pages:
       weeks = page.gen_weeks()
       if 'DETECT' in ENV and ENV['DETECT']:
-         detect_words(page, f'{folder}/detected')
+         detect_words(page, f'{level_workdir}/detected')
       for week in weeks:
          if 'DETECT' in ENV and ENV['DETECT']:
-            detect_elements(week, f'{folder}/detected')
+            detect_elements(week, f'{level_workdir}/detected')
          courses = courses + week.gen_courses()
    courses.sort(key=lambda x: x.begin)
    if 'PRINT' in ENV and ENV['PRINT']:
       print_courses(courses)
    return courses
 
-def gen_calendars(courses, level, folder):
-   if not os.path.exists(folder):
-      print(f"Creating \"{folder}\" folder")
-      os.makedirs(folder)
+def gen_calendars(courses: list, level: str, ics_dir: str):
+   """Generate ics callendar using generated courses 
+
+   Args:
+       courses (list): generated courses from pdf
+       level (str): course level
+       ics_dir (str): ics directory
+   """
+   mkdir_if_not_exists(ics_dir)
    print(f"{level} : Generating Callendars")
    grp_name = {Group.ALL:'All', Group.GROUP1:'Groupe 1', Group.GROUP2:'Groupe 2'}
    calendar = {Group.ALL:Calendar(), Group.GROUP1:Calendar(), Group.GROUP2:Calendar(), 'Exam':Calendar()}
@@ -120,41 +161,76 @@ def gen_calendars(courses, level, folder):
       call.events.add(e)
    for g, n in name.items():
       print(f"{level} : Creating {n}.ics")
-      with open(f'{folder}/{n}.ics', 'w') as f:
+      with open(f'{ics_dir}/{n}.ics', 'w') as f:
          f.write(str(calendar[g]))
 
-def send(level, folder):
+def send(level: str, ics_folder: str):
+   """Send generated ics files through ftp
+
+   Args:
+       level (str): course level
+       ics_folder (str) : ics directory
+   """
    ftp_ident = ENV['FTP']
    ftp = ftp_handler(ftp_ident)
    files = [f'{level}A', f'{level}G1', f'{level}G2', f'{level}E']
    for f in files:
-      ftp.send_file(f'{f}.ics', folder)
+      ftp.send_file(f'{f}.ics', ics_folder)
    ftp.close()
 
-def detect_elements(week: Week, folder: str):
-   if not os.path.exists(folder):
-      print(f"Creating \"{folder}\" folder")
-      os.makedirs(folder)
+def detect_elements(week: Week, detect_folder: str):
+   """Save detected elements on each week 
+
+   Args:
+       week (Week): processed week 
+       detect_folder (str): folder which the file (with detected elements) should be saved
+   """
+   mkdir_if_not_exists(detect_folder)
    week.frame_elements()
-   week.save(folder)
+   week.save(detect_folder)
 
-def detect_words(page: Page, folder: str):
-   if not os.path.exists(folder):
-      print(f"Creating \"{folder}\" folder")
-      os.makedirs(folder)
+def detect_words(page: Page, detect_folder: str):
+   """Save detected element on each pages
+
+   Args:
+       page (Page): processed page
+       detect_folder (str): folder wich the file (with detected elements) should be saved
+   """
+   mkdir_if_not_exists(detect_folder)
    page.frame_elements()
-   page.save(folder)
+   page.save(detect_folder)
 
-def print_courses(courses):
+def print_courses(courses: list):
+   """Print generated courses 
+
+   Args:
+       courses (list): generated courses
+   """
    for c in courses:
       print(c)
+      
+def mkdir_if_not_exists(folder: str):
+   """Create a folder if it doesn't extists
 
-def main(argv):
+   Args:
+       folder (str): folder which must be created/checked
+   """
+   if not os.path.exists(folder):
+      print(f"Creating \"{folder}\" folder")
+      os.makedirs(folder)
+
+def main(argv : list):
+   """Main function, Handle the cli arguments, gather environnement variables and config file parameters.
+      This function also define which action to perfom
+
+   Args:
+       argv (list): list of argument and values pass by the user
+   """
    global ENV, DATA
    ATTR = {}
    action = None
-   options, _ = getopt.getopt(argv, 'f:o:c:u:l:t:dpvh', ['folder=','output=', 'config=', 'url=', 'level=', 'time=', 'detect', 'print', 'force', 'ftp_test', 'help',  'version'])
-   assign_map = {'-f':'FOLDER', '--folder':'FOLDER', '-o':'OUTPUT', '--output':'OUTPUT', '-c':'CONFIG', '--config': 'CONFIG', '-u':'URL', '--url':'URL', '-l':'LEVEL', '--level':'LEVEL', '-d':'DETECT', '--detect':'DETECT', '-p':'PRINT', '--print':'PRINT', '--force':'FORCE', '-t':'TIME', '--time':'TIME'}
+   options, _ = getopt.getopt(argv, 'w:o:c:u:l:t:dpvh', ['workdir=','output=', 'config=', 'url=', 'level=', 'time=', 'detect', 'print', 'force', 'ftp_test', 'help',  'version'])
+   assign_map = {'-w':'WORKDIR', '--workdir':'WORKDIR', '-o':'OUTPUT', '--output':'OUTPUT', '-c':'CONFIG', '--config': 'CONFIG', '-u':'URL', '--url':'URL', '-l':'LEVEL', '--level':'LEVEL', '-d':'DETECT', '--detect':'DETECT', '-p':'PRINT', '--print':'PRINT', '--force':'FORCE', '-t':'TIME', '--time':'TIME'}
    action_map = {'--ftp_test':ftp_test, '-h':help, '--help':help, '--version':version} 
    for opt, arg in options:
       in_maps = False
@@ -172,7 +248,7 @@ def main(argv):
    ENV = Environnement.get_parametters(ATTR)
    DATA = Environnement.get_data(ATTR)
    if action is None:
-      action = loop_time if ('TIME' in ENV) else parse
+      action = loop_time if ('TIME' in ENV) else processing_levels
    action()
    exit(0)
 
