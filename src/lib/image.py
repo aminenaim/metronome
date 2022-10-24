@@ -6,7 +6,7 @@ from lib.geometry import Area, AxeType, Point, Range
 from lib.words import Words
 
 class Color(Enum):
-    YELLOW = [[0, 100, 100], [0, 255, 255]] # BGR
+    YELLOW = [[0, 220, 220], [50, 255, 255]] # BGR
     BLACK = [100,255] # BGR
 
 class Image:
