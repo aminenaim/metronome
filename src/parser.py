@@ -86,8 +86,10 @@ def parsing_edt(level: str, url: str, workdir: str, ics_dir: str):
          pdf = Pdf(url ,level_workdir)
          print(f"{level} : Processing and parsing images and words")
          pages = pdf.gen_pages()
+         print(f"{level} : Gen weeks")
+         weeks = gen_weeks(level_workdir, pages)
          print(f"{level} : Get courses")
-         courses = gen_courses(level_workdir, pages)
+         courses = gen_courses(level_workdir, weeks)
          print(f"{level} : Generate ics callendars")
          gen_calendars(courses, level, ics_dir)
          if ('FTP' in ENV):
@@ -113,25 +115,51 @@ def edt_need_update(url : str, level_workdir : str) -> bool:
    """
    return ('FORCE' in ENV and ENV['FORCE']) or Metadata.check_update(url, level_workdir, Pdf.PDF_NAME)
 
-def gen_courses(level_workdir: str, pages: list) -> list:
+def gen_weeks(level_workdir: str, pages: list) -> list:
+   """Generate weeks from pages
+
+   Args:
+       level_workdir (str): level working directory
+       pages (list): pages object of edt
+
+   Returns:
+       list: the weeks generated
+   """
+   weeks = []
+   for page in pages:
+      weeks += page.gen_weeks()
+      if 'DETECT' in ENV and ENV['DETECT']:
+         detect_words(page, f'{level_workdir}/detected')
+   i = 0
+   time_axe_ref = None
+   while i <= len(weeks) and time_axe_ref is None: # get a reference 
+      if len(weeks[i].time_axe):
+         time_axe_ref = weeks[i].time_axe
+      i+=1
+   for week in weeks:
+      if not len(week.time_axe) and time_axe_ref is not None:
+         week.time_axe = time_axe_ref
+   return weeks
+   
+
+def gen_courses(level_workdir: str, weeks: list) -> list:
    """Generate the courses from the pdf data
 
    Args:
        level_workdir (str): level working directory
-       pages (list): pages object of the edt
+       weeks (list): weeks object of edt
 
    Returns:
        list: list of the courses generated
    """
    courses = []
-   for page in pages:
-      weeks = page.gen_weeks()
+   for week in weeks:
       if 'DETECT' in ENV and ENV['DETECT']:
-         detect_words(page, f'{level_workdir}/detected')
-      for week in weeks:
-         if 'DETECT' in ENV and ENV['DETECT']:
-            detect_elements(week, f'{level_workdir}/detected')
-         courses = courses + week.gen_courses()
+         detect_elements(week, f'{level_workdir}/detected')
+      if len(week.days.list) and len(week.time_axe):  
+         courses += week.gen_courses()
+      else:
+         print(f"Wrong Week detected with {len(week.days.list)} days and {len(week.hours.list)} hours")
    courses.sort(key=lambda x: x.begin)
    if 'PRINT' in ENV and ENV['PRINT']:
       print_courses(courses)
