@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import timedelta
 from enum import Enum
 import re
@@ -16,16 +17,17 @@ class Week:
         self.words = words
         self.time = time
         frames = self.image.find_contours(True, True, self.__RANGE_CLASS)
-        
-        self.days = self.__get_day(frames)
-        self.hours = self.__get_hour(Range(image.area.x1(),image.area.x2(), AxeType.ABSCISSA))
-        self.id = self.__get_id()
+        words_days = Words(words=self.words, pattern=Time.REGEX_DAY, remove=True)
+        words_hours = Words(words=self.words, pattern=Time.REGEX_HOUR, remove=True)
+        words_id = Words(words=self.words, pattern=self.REGEX_WEEK_ID, remove=True)
+        self.days = self.__get_day(frames, words_days)
+        self.hours = self.__get_hour(Range(image.area.x1(),image.area.x2(), AxeType.ABSCISSA), words_hours)
+        self.id = self.__get_id(words_id)
         self.classes = self.__get_classes(frames)
-        
         self.time_axe = self.__get_time_axe()
         
-    def __get_day(self, frames: list) -> Words:
-        days: Words = Words(words=self.words, pattern=Time.REGEX_DAY, remove=True)
+    def __get_day(self, frames: list, words_days: Words) -> Words:
+        days = deepcopy(words_days)
         for day in days.list:
             for frame in frames:
                 if frame.in_bound(day.center()):
@@ -33,8 +35,8 @@ class Week:
                     day.content = timedelta(days=Time.DAYS[day.content])
         return days
         
-    def __get_hour(self, margin: Range) -> Words:
-        hours = Words(words=self.words, pattern=Time.REGEX_HOUR, remove=True)
+    def __get_hour(self, margin: Range, words_hours: Words) -> Words:
+        hours = deepcopy(words_hours)
         for hour in hours.list:
             hour.content = int(hour.content.replace('h','')) # transform '10h' in '10'
             hour.p1.x = hour.p1.x - 7 # hour space between word (10h) and de border of the hour cell
@@ -45,7 +47,7 @@ class Week:
             hours.add(Area(p1=Point(margin.a + 3, hours.first().y1()), p2=Point(hours.first().x1() - 1, hours.first().y2()), content=hours.first().content - 1),0) # add first hour (7h)
             self.__fix_last_hour(hours, margin)
         return hours
-
+                    
     def __fix_last_hour(self, hours: Words, margin: Range):
         hours.last().p2.x = margin.b - 3 # match last hour with the border
         last = hours.last()
@@ -62,10 +64,9 @@ class Week:
             time_axe.add(self.hours.last().x2(),timedelta(hours=self.hours.last().content + 1, minutes=0))
         return time_axe        
     
-    def __get_id(self) -> int:
-        week_id = Words(words=self.words, pattern=self.REGEX_WEEK_ID, remove=True)
-        if week_id != 0 and len(week_id.list) != 0:
-            return int(re.sub(r'[Ss]','',week_id.list[0].content))
+    def __get_id(self, word_id: Words) -> int:
+        if word_id != 0 and len(word_id.list) != 0:
+            return int(re.sub(r'[Ss]','',word_id.list[0].content))
         else:
             return 0 # week unknown
     
@@ -107,12 +108,46 @@ class Week:
             self.image.frame(a)
         for a in self.days.list:
             self.image.frame(a, (0,255,0))
-        for a in self.hours.list:
-            self.image.frame(a, (255,0,0))
+        # for a in self.hours.list:
+        #     self.image.frame(a, (255,0,0))
     
     def save(self, path: str) -> None:
         name_week = str(self.time).split(' ')[0]
         self.image.save(path, f'week{name_week}')
+
+class Hours:
+    def __init__(self, words_hours: Words, words_id: Words, margin : Range, week_image: Image) -> None:
+        self.image = self.__get_image(words_hours, words_id, margin, week_image)
+        lines = self.__detect_time_scale(words_hours)
+    
+    def __get_image(self, words_hours: Words, words_id: Words, margin : Range, week_image: Image) -> Image:
+        image = None
+        if len(words_hours.list):
+            hour_area = Area(Point(margin.a, words_hours.first().y1()), Point(margin.b, words_hours.first().y2()))
+            image = week_image.sub(hour_area)
+            upper_words_hours = deepcopy(words_hours)
+            upper_words_id = deepcopy(words_id)
+            upper_words_hours.change_origin(hour_area.p1)
+            upper_words_id.change_origin(hour_area.p1)
+            for wd in upper_words_hours.list:
+                image.frame(wd, 255, -1)
+            for wi in upper_words_id.list:
+                image.frame(wi, 255, -1)
+        return image
+            
+    def __detect_time_scale(self, words_hours: Words):
+        lines = []
+        if len(words_hours.list):
+            one_d = self.image.one_dimension(True)
+            i = 0
+            while i < len(one_d):
+                if one_d[i] < 150:
+                    lines.append(i)
+                    while i < len(one_d) and one_d[i] < 200 :
+                        i+=1
+                else:
+                    i+=1
+        return lines
 
 class Group(Enum):
     ALL = 0

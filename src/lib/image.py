@@ -51,6 +51,14 @@ class Image:
                     count+=1
         return (count*100)/total
     
+    def one_dimension(self, rotate = False) -> list:
+        res = []
+        if rotate:
+            rotated = cv2.rotate(self.gray, cv2.ROTATE_90_CLOCKWISE)
+        for y in rotated:
+            res.append(int(sum(y)/len(y)))
+        return res
+    
     @classmethod
     def __in_range(cls, gray: bool, value, ref):
         if gray: # Gray 1 value
@@ -82,6 +90,12 @@ class Image:
             cv2.rectangle(self.color, area.p1.tuple(), area.p2.tuple(), color, size)
             
         cv2.rectangle(self.color, area.p1.tuple(), area.p2.tuple(), color, size)
+    
+    def line(self, p1: Point, p2: Point, color=(0,0,255), size=2):
+        if isinstance(color, int):
+            cv2.line(self.gray, p1.tuple(), p2.tuple(), color, thickness=size)
+        else:
+            cv2.line(self.color, p1.tuple(), p2.tuple(), color, thickness=size)
     
     def save(self, path: str, name: str, color: bool = True) -> None:
         cv2.imwrite(f"{path}/{name}.jpg", self.color if color else self.gray)

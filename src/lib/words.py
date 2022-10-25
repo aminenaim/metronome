@@ -1,5 +1,5 @@
 from re import Pattern
-from lib.geometry import Area
+from lib.geometry import Area, Point
 import copy
 
 
@@ -41,7 +41,7 @@ class Words:
                 self.list.remove(a)
         return res
     
-    def change_origin(self, area: Area) -> None:
+    def change_origin(self, point: Point) -> None:
         for w in self.list:
-            w.change_origin(area)
+            w.change_origin(point)
     
