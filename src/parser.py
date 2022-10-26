@@ -8,7 +8,7 @@ from lib.document import Metadata, Page, Pdf
 from lib.schedule import Group, Week, Course
 from ics import Calendar, Event
 
-VERSION = '1.0.0'
+VERSION = '1.2.0'
 HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
         "\n"
         "Options:\n"
