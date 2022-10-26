@@ -126,10 +126,10 @@ class Hours:
     
     def __get_hours_axe(self, words_hours: Words, lines: list, margin: Range) -> Axe:
         hour_axe = Axe()
+        words_hours.list.sort(key=lambda x: x.p1.x)
         if len(words_hours.list):
             hour = int(words_hours.first().content.replace('h','')) - 1
             hour_axe.add(margin.a, hour)
-        words_hours.list.sort(key=lambda x: x.p1.x)
         for wh in words_hours.list:
             hour = int(wh.content.replace('h',''))
             middle = wh.middle(AxeType.ABSCISSA)
