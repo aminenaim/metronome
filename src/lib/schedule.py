@@ -17,17 +17,17 @@ class Week:
         self.words = words
         self.time = time
         frames = self.image.find_contours(True, True, self.__RANGE_CLASS)
-        words_days = AreaList(words=self.words, pattern=Time.REGEX_DAY, remove=True)
-        words_hours = AreaList(words=self.words, pattern=Time.REGEX_HOUR, remove=True)
-        words_id = AreaList(words=self.words, pattern=self.REGEX_WEEK_ID, remove=True)
+        words_days = self.words.match(Time.REGEX_DAY, remove=True)
+        words_hours = self.words.match(pattern=Time.REGEX_HOUR, remove=True)
+        words_id = self.words.match(pattern=self.REGEX_WEEK_ID, remove=True)
         self.hours = Hours(words_hours, words_id, Range(image.area.x1(),image.area.x2(), AxeType.ABSCISSA), self.image)
         self.days = self.__get_day(frames, words_days)
         self.id = self.__get_id(words_id)
         self.classes = self.__get_classes(frames)
         
-    def __get_day(self, frames: list, words_days: AreaList) -> AreaList:
+    def __get_day(self, frames: AreaList, words_days: AreaList) -> AreaList:
         days = deepcopy(words_days)
-        for day in days.list:
+        for day in days:
             for frame in frames:
                 if frame.in_bound(day.center()):
                     day.resize(frame)
@@ -35,16 +35,16 @@ class Week:
         return days
     
     def __get_id(self, word_id: AreaList) -> int:
-        if word_id != 0 and len(word_id.list) != 0:
-            return int(re.sub(r'[Ss]','',word_id.list[0].content))
+        if word_id != 0 and len(word_id) != 0:
+            return int(re.sub(r'[Ss]','',word_id[0].content))
         else:
             return 0 # week unknown
     
-    def __get_classes(self, frames: list) -> list:
+    def __get_classes(self, frames: AreaList) -> AreaList:
         classes = []
         for frame in frames:
             frame.content = [] # add words to each class frame
-            for word in self.words.list: 
+            for word in self.words: 
                 if frame.in_bound(word.center()):
                     frame.content.append(word.content)
             if len(frame.content) != 0: # remove frame without content
@@ -52,7 +52,7 @@ class Week:
             self.__remove_overlapping(classes)
         return classes
 
-    def __remove_overlapping(self, classes):
+    def __remove_overlapping(self, classes: AreaList) -> None:
         overlapping = []
         for c1 in classes: # remove overlapping frames
             for c2 in classes:
@@ -61,7 +61,7 @@ class Week:
         for o in overlapping:
                 classes.remove(o)
     
-    def gen_courses(self) -> list:
+    def gen_courses(self) -> List['Course']:
         courses = []
         for c in self.classes:
             sub_img = self.image.sub(c, False)
@@ -70,13 +70,13 @@ class Week:
         return courses
         
     def frame_words(self) -> None:
-        for a in self.words.list:
+        for a in self.words:
             self.image.frame(a)
     
     def frame_elements(self) -> None:
         for a in self.classes:
             self.image.frame(a)
-        for a in self.days.list:
+        for a in self.days:
             self.image.frame(a, (0,255,0))
         for e in list(self.hours.time_axe):
             p1 = Point(e,0)
@@ -96,20 +96,20 @@ class Hours:
     
     def __get_image(self, words_hours: AreaList, words_id: AreaList, margin : Range, week_image: Image) -> Image:
         image = None
-        if len(words_hours.list):
+        if len(words_hours):
             hour_area = Area(Point(margin.a, words_hours.first().y1()), Point(margin.b, words_hours.first().y2()))
             image = week_image.sub(hour_area)
             upper_words_hours = deepcopy(words_hours)
             upper_words_id = deepcopy(words_id)
             upper_words_hours.change_origin(hour_area.p1)
             upper_words_id.change_origin(hour_area.p1)
-            for wd in upper_words_hours.list:
+            for wd in upper_words_hours:
                 image.frame(wd, 255, -1)
-            for wi in upper_words_id.list:
+            for wi in upper_words_id:
                 image.frame(wi, 255, -1)
         return image
             
-    def __detect_time_scale(self) -> list:
+    def __detect_time_scale(self) -> List[int]:
         lines = []
         if self.image is not None:
             one_d = self.image.one_dimension(True)
@@ -123,25 +123,25 @@ class Hours:
                     i+=1
         return lines
     
-    def __get_hours_axe(self, words_hours: AreaList, lines: list, margin: Range) -> Axe:
+    def __get_hours_axe(self, words_hours: AreaList, lines: List[int], margin: Range) -> Axe:
         hour_axe = Axe()
-        words_hours.list.sort(key=lambda x: x.p1.x)
-        if len(words_hours.list):
+        words_hours.sort(key=lambda x: x.p1.x)
+        if len(words_hours):
             hour = int(words_hours.first().content.replace('h','')) - 1
             hour_axe.add(margin.a, hour)
-        for wh in words_hours.list:
+        for wh in words_hours:
             hour = int(wh.content.replace('h',''))
             middle = wh.middle(AxeType.ABSCISSA)
             i = -1
             while((i + 1) < len(lines) and lines[i + 1] < middle):
                 i+=1
             hour_axe.add(lines[i], hour)
-        if len(words_hours.list) and (len(lines) - 1 - i > 2):
+        if len(words_hours) and (len(lines) - 1 - i > 2):
             hour = int(words_hours.last().content.replace('h','')) + 1
             hour_axe.add(lines[len(lines) - 1], hour)
         return hour_axe
     
-    def __get_time_axe(self, lines: list, hour_axe: Axe):
+    def __get_time_axe(self, lines: List[int], hour_axe: Axe):
         list_key = list(hour_axe)
         time_axe = Axe()
         matrice_hour = self.__sublist_hour(lines, list_key)
@@ -158,8 +158,8 @@ class Hours:
                 time_axe.add(element,timedelta(hours=hour, minutes=15*id))
         return time_axe
     
-    def __sublist_hour(self, lines: list, list_key: list):
-        matrice_hour: List[list] = []
+    def __sublist_hour(self, lines: List[int], list_key: List[int]):
+        matrice_hour: List[List[int]] = []
         id_key,id_line = 0,0
         while(id_key + 1 < len(list_key)):
             matrice_hour.append([lines[id_line]])
@@ -198,7 +198,7 @@ class Course:
         
     def __get_day(self, days: AreaList, course_area: Area) -> Area:
         middle = course_area.middle(AxeType.ORDINATE)
-        for d in days.list:
+        for d in days:
             full_day: Range = d.to_range(AxeType.ORDINATE)
             if full_day.between(middle):
                 return d

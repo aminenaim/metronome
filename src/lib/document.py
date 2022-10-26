@@ -98,7 +98,7 @@ class Pdf:
                 for text_line in element._objs:
                     t = tuple(e*(200/72) for e in text_line.bbox)
                     a = Area(Point(int(t[0]),int(area.h() - t[3])), Point(int(t[2]),int(area.h() - t[1])), content=text_line.get_text().strip())
-                    words.add(a)
+                    words.append(a)
         return words
     
     def __len__(self) -> int:
@@ -116,8 +116,8 @@ class Page:
         self.week_coordinate = self.image.find_contours(False, False, self.__RANGE_WEEK, self.__AVG_WEEK)
 
     def __gen_week_time(self) -> AreaList:
-        times = AreaList(words=self.words, pattern=Time.REGEX_WEEK, remove=True)
-        for t in times.list:
+        times = self.words.match(pattern=Time.REGEX_WEEK, remove=True)
+        for t in times:
             t.content = Time(t.content)
         return times
             
@@ -125,21 +125,21 @@ class Page:
         weeks = []
         for c in self.week_coordinate:
             r: Range = c.to_range(AxeType.ORDINATE)
-            for t in self.times.list:
+            for t in self.times:
                 if r.in_bound(t):
                     time: Time = t.content
             image = self.image.sub(c)
             # make sure there is contour around the week
             image.frame(image.area, color=(0,0,0), size=5)
             image.frame(image.area, color=0, size=5)
-            week_word = AreaList(words=self.words, area=c)
+            week_word = self.words.contained(c)
             week_word.change_origin(c.p1)
             week = Week(image, week_word, time)
             weeks.append(week)
         return weeks
 
     def frame_elements(self) -> None:
-        for a in self.words.list:
+        for a in self.words:
             self.image.frame(a)
         for a in self.week_coordinate:
             self.image.frame(a, (0,255,0))

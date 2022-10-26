@@ -134,44 +134,40 @@ class Axe(dict):
         key = min(self, key=lambda l:abs(l-x))
         return self[key]
 
-class AreaList:
-    def __init__(self, words: 'AreaList' = None, area: Area = None, pattern: Pattern = None, remove: bool = False) -> None:
-        self.list: List[Area] = []
-        assert (words is None and (area is None and pattern is None)) or (words is not None and (area is not None or pattern is not None)), "word and area/pattern must be ether not set, or set together"
-        if area is not None:
-            self.list = words.contained(area, remove)
-        if pattern is not None:
-            self.list = words.match(pattern, remove)
-            
-    def add(self, area: Area, index=None) -> None:
-        if index is None:
-            self.list.append(area)
-        else:
-            self.list.insert(0,area)
-    
-    def remove(self, word: Area) -> None:
-        self.list.remove(word)
+class AreaList(List[Area]):
+    def __init__(self) -> None:
+        super().__init__()
     
     def last(self) -> Area:
-        return self.list[len(self.list) - 1]
+        return self[len(self) - 1]
 
     def first(self) -> Area:
-        return self.list[0]
+        return self[0]
     
-    def contained(self, area: Area, remove: bool = False) -> List[Area]:
-        res = [copy.deepcopy(a) for a in self.list if area.contain(a)]
-        if remove:
-            for a in res:
-                self.list.remove(a)
-        return res
+    def contained(self, area: Area, remove: bool = False) -> 'AreaList':
+        sub = AreaList()
+        i = 0
+        while(i < len(self)):
+            if area.contain(self[i]):
+                sub.append(copy.deepcopy(self[i]))
+                if remove:
+                    self.remove(self[i])
+                    i-=1
+            i+=1
+        return sub
 
-    def match(self, pattern:  Pattern, remove: bool = False) -> List[Area]:
-        res = [a for a in self.list if pattern.match(a.content)]
-        if remove:
-            for a in res:
-                self.list.remove(a)
-        return res
+    def match(self, pattern:  Pattern, remove: bool = False) -> 'AreaList':
+        sub = AreaList()
+        i = 0
+        while(i < len(self)):
+            if pattern.match(self[i].content):
+                sub.append(copy.deepcopy(self[i]))  
+                if remove:
+                    self.remove(self[i])
+                    i-=1
+            i+=1
+        return sub
     
     def change_origin(self, point: Point) -> None:
-        for w in self.list:
+        for w in self:
             w.change_origin(point)

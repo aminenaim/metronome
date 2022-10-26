@@ -2,7 +2,7 @@ import copy
 from enum import Enum
 import cv2
 import numpy as np
-from lib.geometry import Area, AxeType, Point, Range
+from lib.geometry import Area, AreaList, AxeType, Point, Range
 
 class Color(Enum):
     YELLOW = [[0, 220, 220], [50, 255, 255]] # BGR
@@ -20,14 +20,14 @@ class Image:
         h, w, _ = self.color.shape
         self.area = Area(Point(0,0), Point(w,h))
         
-    def find_contours(self, dilate: bool = False, all: bool = True, width: Range = None, avg_height: int = None) -> list:
+    def find_contours(self, dilate: bool = False, all: bool = True, width: Range = None, avg_height: int = None) -> AreaList:
         _, modified_image = cv2.threshold(self.gray, 130, 255, cv2.THRESH_BINARY_INV)
         mode = cv2.RETR_TREE if all else cv2.RETR_EXTERNAL
         if dilate:
             kernel = np.ones((4,4), np.uint8)
             modified_image = cv2.dilate(modified_image, kernel, iterations = 1)
         contours, _ = cv2.findContours(modified_image, mode, cv2.CHAIN_APPROX_SIMPLE)
-        coordinates = []
+        coordinates = AreaList()
         for contour in contours:
             x,y,w,h = cv2.boundingRect(contour)
             area = Area(x=x,y=y,w=w,h=h)

@@ -1,10 +1,11 @@
 import os, time, sys, getopt
+from typing import List
 import requests
 import urllib
 from lib.environnement import Environnement
 from lib.ftp import ftp_handler
 from lib.document import Metadata, Page, Pdf
-from lib.schedule import Group, Week
+from lib.schedule import Group, Week, Course
 from ics import Calendar, Event
 
 VERSION = '1.0.0'
@@ -25,17 +26,17 @@ HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
         "\n"
         "Runs on python3 with dependences listed on requirements.txt\n")
 
-def version():
+def version() -> None:
    """Print the verison of this script
    """
    print(VERSION)
    
-def help():
+def help() -> None:
    """Print the help string 
    """
    print(HELP)
    
-def ftp_test():
+def ftp_test() -> None:
    """Ftp connexion test provided by the user
       It also list the files on the current directory
    """
@@ -45,7 +46,7 @@ def ftp_test():
    print("Listing files from current directory :")
    ftp.list()
 
-def loop_time():
+def loop_time() -> None:
    """Loop for forever, with a delay of 'TIME' seconds (with TIME provided by the user through config/env/cli) 
    """
    delay = int(ENV['TIME'])
@@ -55,7 +56,7 @@ def loop_time():
       print(f"Waiting for {delay} sec")
       time.sleep(delay)
    
-def processing_levels():
+def processing_levels() -> None:
    """Process each level given by the user
    """
    workdir, output, urls, levels = ENV['WORKDIR'], ENV['OUTPUT'], DATA['URL'], ENV['LEVEL'].upper().split(',')
@@ -69,7 +70,7 @@ def processing_levels():
          print(f"Level {l} not found in data.json", file=sys.stderr)
          exit(1)
 
-def parsing_edt(level: str, url: str, workdir: str, ics_dir: str):
+def parsing_edt(level: str, url: str, workdir: str, ics_dir: str) -> None:
    """Parse the edt into ics files and send them over ftp
 
    Args:
@@ -115,7 +116,7 @@ def edt_need_update(url : str, level_workdir : str) -> bool:
    """
    return ('FORCE' in ENV and ENV['FORCE']) or Metadata.check_update(url, level_workdir, Pdf.PDF_NAME)
 
-def gen_weeks(level_workdir: str, pages: list) -> list:
+def gen_weeks(level_workdir: str, pages: List[Page]) -> List[Week]:
    """Generate weeks from pages
 
    Args:
@@ -125,7 +126,7 @@ def gen_weeks(level_workdir: str, pages: list) -> list:
    Returns:
        list: the weeks generated
    """
-   weeks = []
+   weeks: List[Week] = []
    for page in pages:
       weeks += page.gen_weeks()
       if 'DETECT' in ENV and ENV['DETECT']:
@@ -142,7 +143,7 @@ def gen_weeks(level_workdir: str, pages: list) -> list:
    return weeks
    
 
-def gen_courses(level_workdir: str, weeks: list) -> list:
+def gen_courses(level_workdir: str, weeks: List[Week]) -> List[Course]:
    """Generate the courses from the pdf data
 
    Args:
@@ -152,20 +153,20 @@ def gen_courses(level_workdir: str, weeks: list) -> list:
    Returns:
        list: list of the courses generated
    """
-   courses = []
+   courses: List[Course] = []
    for week in weeks:
       if 'DETECT' in ENV and ENV['DETECT']:
          detect_elements(week, f'{level_workdir}/detected')
-      if len(week.days.list) and len(week.hours.time_axe):  
+      if len(week.days) and len(week.hours.time_axe):  
          courses += week.gen_courses()
       else:
-         print(f"Wrong Week detected with {len(week.days.list)} days and {len(week.hours.list)} hours")
+         print(f"Wrong Week detected with {len(week.days)} days and {len(week.hours)} hours")
    courses.sort(key=lambda x: x.begin)
    if 'PRINT' in ENV and ENV['PRINT']:
       print_courses(courses)
    return courses
 
-def gen_calendars(courses: list, level: str, ics_dir: str):
+def gen_calendars(courses: List[Course], level: str, ics_dir: str) -> None:
    """Generate ics callendar using generated courses 
 
    Args:
@@ -193,7 +194,7 @@ def gen_calendars(courses: list, level: str, ics_dir: str):
       with open(f'{ics_dir}/{n}.ics', 'w') as f:
          f.write(str(calendar[g]))
 
-def send(level: str, ics_folder: str):
+def send(level: str, ics_folder: str) -> None:
    """Send generated ics files through ftp
 
    Args:
@@ -207,7 +208,7 @@ def send(level: str, ics_folder: str):
       ftp.send_file(f'{f}.ics', ics_folder)
    ftp.close()
 
-def detect_elements(week: Week, detect_folder: str):
+def detect_elements(week: Week, detect_folder: str) -> None:
    """Save detected elements on each week 
 
    Args:
@@ -218,7 +219,7 @@ def detect_elements(week: Week, detect_folder: str):
    week.frame_elements()
    week.save(detect_folder)
 
-def detect_words(page: Page, detect_folder: str):
+def detect_words(page: Page, detect_folder: str) -> None:
    """Save detected element on each pages
 
    Args:
@@ -229,7 +230,7 @@ def detect_words(page: Page, detect_folder: str):
    page.frame_elements()
    page.save(detect_folder)
 
-def print_courses(courses: list):
+def print_courses(courses: List[Course]) -> None:
    """Print generated courses 
 
    Args:
@@ -238,7 +239,7 @@ def print_courses(courses: list):
    for c in courses:
       print(c)
       
-def mkdir_if_not_exists(folder: str):
+def mkdir_if_not_exists(folder: str) -> None:
    """Create a folder if it doesn't extists
 
    Args:
