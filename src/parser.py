@@ -176,13 +176,14 @@ def gen_calendars(courses: list, level: str, ics_dir: str):
    mkdir_if_not_exists(ics_dir)
    print(f"{level} : Generating Callendars")
    grp_name = {Group.ALL:'All', Group.GROUP1:'Groupe 1', Group.GROUP2:'Groupe 2'}
-   calendar = {Group.ALL:Calendar(), Group.GROUP1:Calendar(), Group.GROUP2:Calendar(), 'Exam':Calendar()}
+   periodid = "-//Google Inc//Google Calendar 70.9054//EN" # TODO find a better solution to render HTML
+   calendar = {Group.ALL:Calendar(creator=periodid), Group.GROUP1:Calendar(creator=periodid), Group.GROUP2:Calendar(creator=periodid), 'Exam':Calendar(creator=periodid)}
    name = {Group.ALL:f'{level}A', Group.GROUP1:f'{level}G1', Group.GROUP2:f'{level}G2', 'Exam':f'{level}E'}
    for c in courses:
       if c.exam:
          grp = grp_name[c.group]
          call: Calendar = calendar['Exam']
-         e = Event(name=c.name, description='Prof: ' + c.teacher + ' - ' + grp, location=c.location, begin=c.begin, end=c.end)         
+         e = Event(name=c.name, description='Prof: ' + c.teacher + ' <br> ' + grp, location=c.location, begin=c.begin, end=c.end)         
       else:
          call: Calendar = calendar[c.group]
          e = Event(name=c.name, description='Prof: ' + c.teacher, location=c.location, begin=c.begin, end=c.end)
