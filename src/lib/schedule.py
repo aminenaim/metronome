@@ -136,10 +136,21 @@ class Hours:
             while((i + 1) < len(lines) and lines[i + 1] < middle):
                 i+=1
             hour_axe.add(lines[i], hour)
-        if len(words_hours) and (len(lines) - 1 - i > 2):
-            hour = int(words_hours.last().content.replace('h','')) + 1
-            hour_axe.add(lines[len(lines) - 1], hour)
+        if len(words_hours):
+            self.__add_last_hour(words_hours, lines, hour_axe, i)
         return hour_axe
+    
+    def __add_last_hour(self, words_hours: AreaList, lines: List[int], hour_axe: Axe, i: int):
+        hour = int(words_hours.last().content.replace('h','')) + 1
+        list_hour = list(hour_axe)
+        lenght_previous_hour = abs(list_hour[len(list_hour) - 2] - list_hour[len(list_hour) - 1])
+        lenght_current_hour = abs(list_hour[len(list_hour) - 1] - lines[len(lines) - 1])
+        if abs(lenght_previous_hour - lenght_current_hour) > abs(lenght_previous_hour/2 - lenght_current_hour):
+            lines.append(lines[len(lines) - 1] + int(lenght_current_hour/2)) # Add last quarter
+            lines.append(lines[len(lines) - 1] + int(lenght_current_hour)) # Add last hour
+            hour_axe.add(lines[len(lines) - 1] + int(lenght_current_hour), hour) 
+        else:
+            hour_axe.add(lines[len(lines) - 1], hour)
     
     def __get_time_axe(self, lines: List[int], hour_axe: Axe):
         list_key = list(hour_axe)
