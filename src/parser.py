@@ -3,8 +3,8 @@ import requests
 import urllib
 from lib.environnement import Environnement
 from lib.ftp import ftp_handler
-from lib.pdf import Metadata, Page, Pdf
-from lib.week import Group, Week
+from lib.document import Metadata, Page, Pdf
+from lib.schedule import Group, Week
 from ics import Calendar, Event
 
 VERSION = '1.0.0'

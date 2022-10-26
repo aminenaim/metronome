@@ -1,6 +1,7 @@
 import datetime
 import shutil
 import time
+from typing import List
 import pdf2image
 from urllib import request
 from urllib.parse import urlparse
@@ -12,11 +13,10 @@ from pdfminer.pdfinterp import PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 from pdfminer.layout import LTTextBoxHorizontal
 
-from lib.geometry import Area, AxeType, Point, Range
+from lib.geometry import Area, AxeType, Point, Range, AreaList
 from lib.image import Image
 from lib.time import Time
-from lib.week import Week
-from lib.words import Words
+from lib.schedule import Week
 
 class Metadata:
     __TIMESTR = '%a, %d %b %Y %X GMT'
@@ -65,13 +65,13 @@ class Pdf:
         for i, p in enumerate(self.pdf_pages):
             p.save(f'{self.temp_dir}/{self.PAGE_NAME}{i}.jpg',"JPEG")
 
-    def __download(self, url: str):
+    def __download(self, url: str) -> None:
         if Metadata.is_local(url):
             shutil.copyfile(url, self.file)
         else:
             request.urlretrieve(url, self.file)
     
-    def gen_pages(self) -> list:
+    def gen_pages(self) -> List['Page']:
         pages = [] 
         with open(self.file, "rb") as file:
             rsrcmgr = PDFResourceManager()
@@ -85,13 +85,12 @@ class Pdf:
                 pages.append(page)
         return pages
         
-    def del_pages(self):
+    def del_pages(self) -> None:
         for page_number in range(0,len(self)):
             os.remove(f'{self.temp_dir}/{self.PAGE_NAME}{page_number}.jpg')
 
-                
-    def __gen_words(self, area: Area, interpreter: PDFPageInterpreter, device: PDFPageAggregator, page: PDFPage) -> list:          
-        words = Words()
+    def __gen_words(self, area: Area, interpreter: PDFPageInterpreter, device: PDFPageAggregator, page: PDFPage) -> AreaList:          
+        words = AreaList()
         interpreter.process_page(page)
         layout = device.get_result()
         for element in layout:
@@ -109,20 +108,20 @@ class Page:
     __AVG_WEEK = 300
     __RANGE_WEEK = Range(1900, 2200, AxeType.ABSCISSA)
     
-    def __init__(self, image: Image , words: Words, id: int) -> None:
+    def __init__(self, image: Image , words: AreaList, id: int) -> None:
         self.image = image
         self.id = id
         self.words = words
         self.times = self.__gen_week_time()
         self.week_coordinate = self.image.find_contours(False, False, self.__RANGE_WEEK, self.__AVG_WEEK)
 
-    def __gen_week_time(self) -> list:
-        times = Words(words=self.words, pattern=Time.REGEX_WEEK, remove=True)
+    def __gen_week_time(self) -> AreaList:
+        times = AreaList(words=self.words, pattern=Time.REGEX_WEEK, remove=True)
         for t in times.list:
             t.content = Time(t.content)
         return times
             
-    def gen_weeks(self) -> list:
+    def gen_weeks(self) -> List[Week]:
         weeks = []
         for c in self.week_coordinate:
             r: Range = c.to_range(AxeType.ORDINATE)
@@ -133,7 +132,7 @@ class Page:
             # make sure there is contour around the week
             image.frame(image.area, color=(0,0,0), size=5)
             image.frame(image.area, color=0, size=5)
-            week_word = Words(words=self.words, area=c)
+            week_word = AreaList(words=self.words, area=c)
             week_word.change_origin(c.p1)
             week = Week(image, week_word, time)
             weeks.append(week)

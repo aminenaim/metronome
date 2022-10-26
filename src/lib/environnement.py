@@ -9,7 +9,7 @@ class Environnement:
    VARIABLES = ['URL', 'LEVEL', 'DETECT', 'PRINT', 'WORKDIR', 'OUTPUT', 'FTP', 'FORCE', 'TIME']
    
    @classmethod
-   def valid_config(cls, file):
+   def valid_config(cls, file: str):
       if not os.path.exists(file):
          return True
       with open(os.path.exists(file)) as jsonFile:

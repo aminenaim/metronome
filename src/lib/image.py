@@ -3,7 +3,6 @@ from enum import Enum
 import cv2
 import numpy as np
 from lib.geometry import Area, AxeType, Point, Range
-from lib.words import Words
 
 class Color(Enum):
     YELLOW = [[0, 220, 220], [50, 255, 255]] # BGR
@@ -51,7 +50,7 @@ class Image:
                     count+=1
         return (count*100)/total
     
-    def one_dimension(self, rotate = False) -> list:
+    def one_dimension(self, rotate: bool = False) -> list:
         res = []
         if rotate:
             rotated = cv2.rotate(self.gray, cv2.ROTATE_90_CLOCKWISE)
@@ -78,10 +77,6 @@ class Image:
         cv2.imshow(title,self.color if color else self.gray)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-        
-    def remove_word(self, words: Words):
-        for a in words.list:
-            cv2.rectangle(self.color, (a.p1.x,a.p1.y), (a.p2.x,a.p2.y), (255,255,255), -1)
     
     def frame(self, area: Area, color=(0,0,255), size=2) -> None:
         if isinstance(color, int):

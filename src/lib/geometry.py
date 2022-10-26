@@ -1,4 +1,7 @@
 from enum import Enum
+from re import Pattern
+from typing import Any, List, Tuple
+import copy
 
 class AxeType(Enum):
     ABSCISSA = 0
@@ -15,7 +18,7 @@ class Point:
     def __sub__(self,p: 'Point') -> 'Point':
         return Point(self.x - p.x, self.y - p.y)
     
-    def tuple(self):
+    def tuple(self) -> Tuple[int]:
         return self.x, self.y
 
 class Area:
@@ -59,7 +62,7 @@ class Area:
         return (self.x1() <= point.x) and (point.x <= self.x2()) and \
                 (self.y1() <= point.y) and (point.y <= self.y2())
     
-    def slice(self, nb_slices: int,  axe: AxeType) -> list:
+    def slice(self, nb_slices: int,  axe: AxeType) -> List['Area']:
         slices = []
         if(axe == AxeType.ABSCISSA):
             for i in range (0,nb_slices):
@@ -69,7 +72,7 @@ class Area:
                 slices.append(Area(x=self.x1(), y=self.y1() + i * self.h()//nb_slices, w=self.w(), h=self.h()//nb_slices))
         return slices
     
-    def change_origin(self, point: Point):
+    def change_origin(self, point: Point) -> None:
         self.p1 = self.p1 - point
         self.p2 = self.p2 - point
     
@@ -124,10 +127,51 @@ class Axe(dict):
     def __init__(self) -> None:
         super().__init__()
     
-    def add(self, x : int, value):
+    def add(self, x : int, value) -> None:
         self[x] = value
     
-    def closest(self, x: int):
+    def closest(self, x: int) -> Any:
         key = min(self, key=lambda l:abs(l-x))
         return self[key]
+
+class AreaList:
+    def __init__(self, words: 'AreaList' = None, area: Area = None, pattern: Pattern = None, remove: bool = False) -> None:
+        self.list: List[Area] = []
+        assert (words is None and (area is None and pattern is None)) or (words is not None and (area is not None or pattern is not None)), "word and area/pattern must be ether not set, or set together"
+        if area is not None:
+            self.list = words.contained(area, remove)
+        if pattern is not None:
+            self.list = words.match(pattern, remove)
+            
+    def add(self, area: Area, index=None) -> None:
+        if index is None:
+            self.list.append(area)
+        else:
+            self.list.insert(0,area)
     
+    def remove(self, word: Area) -> None:
+        self.list.remove(word)
+    
+    def last(self) -> Area:
+        return self.list[len(self.list) - 1]
+
+    def first(self) -> Area:
+        return self.list[0]
+    
+    def contained(self, area: Area, remove: bool = False) -> List[Area]:
+        res = [copy.deepcopy(a) for a in self.list if area.contain(a)]
+        if remove:
+            for a in res:
+                self.list.remove(a)
+        return res
+
+    def match(self, pattern:  Pattern, remove: bool = False) -> List[Area]:
+        res = [a for a in self.list if pattern.match(a.content)]
+        if remove:
+            for a in res:
+                self.list.remove(a)
+        return res
+    
+    def change_origin(self, point: Point) -> None:
+        for w in self.list:
+            w.change_origin(point)
