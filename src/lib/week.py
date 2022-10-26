@@ -79,8 +79,10 @@ class Week:
             self.image.frame(a)
         for a in self.days.list:
             self.image.frame(a, (0,255,0))
-        # for a in self.hours.list:
-        #     self.image.frame(a, (255,0,0))
+        for e in list(self.hours.time_axe):
+            p1 = Point(e,0)
+            p2 = Point(e,30)
+            self.image.line(p1,p2, (255,0,0))
     
     def save(self, path: str) -> None:
         name_week = str(self.time).split(' ')[0]
@@ -167,6 +169,12 @@ class Hours:
                 matrice_hour[id_key].append(lines[id_line])
                 id_line+=1
             id_key+=1
+        if id_line < len(lines):
+            matrice_hour.append([])
+        while(id_line < len(lines)):
+            matrice_hour[id_key].append(lines[id_line])
+            id_line+=1
+
         return matrice_hour        
             
 
