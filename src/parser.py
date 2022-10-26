@@ -133,12 +133,12 @@ def gen_weeks(level_workdir: str, pages: list) -> list:
    i = 0
    time_axe_ref = None
    while i <= len(weeks) and time_axe_ref is None: # get a reference 
-      if len(weeks[i].time_axe):
-         time_axe_ref = weeks[i].time_axe
+      if len(weeks[i].hours.time_axe):
+         time_axe_ref = weeks[i].hours
       i+=1
    for week in weeks:
-      if not len(week.time_axe) and time_axe_ref is not None:
-         week.time_axe = time_axe_ref
+      if not len(week.hours.time_axe) and time_axe_ref is not None:
+         week.hours = time_axe_ref
    return weeks
    
 
@@ -156,7 +156,7 @@ def gen_courses(level_workdir: str, weeks: list) -> list:
    for week in weeks:
       if 'DETECT' in ENV and ENV['DETECT']:
          detect_elements(week, f'{level_workdir}/detected')
-      if len(week.days.list) and len(week.time_axe):  
+      if len(week.days.list) and len(week.hours.time_axe):  
          courses += week.gen_courses()
       else:
          print(f"Wrong Week detected with {len(week.days.list)} days and {len(week.hours.list)} hours")

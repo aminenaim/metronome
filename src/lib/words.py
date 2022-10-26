@@ -1,11 +1,12 @@
 from re import Pattern
 from lib.geometry import Area, Point
+from typing import List
 import copy
 
 
 class Words:
     def __init__(self, words: 'Words' = None, area: Area = None, pattern: Pattern = None, remove: bool = False) -> None:
-        self.list = []
+        self.list: List[Area] = []
         assert (words is None and (area is None and pattern is None)) or (words is not None and (area is not None or pattern is not None)), "word and area/pattern must be ether not set, or set together"
         if area is not None:
             self.list = words.contained(area, remove)

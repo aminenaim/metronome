@@ -2,6 +2,7 @@ from copy import deepcopy
 from datetime import timedelta
 from enum import Enum
 import re
+from typing import List
 from lib.geometry import Area, Axe, AxeType, Point, Range
 from lib.image import Color, Image
 from lib.time import Time
@@ -20,11 +21,10 @@ class Week:
         words_days = Words(words=self.words, pattern=Time.REGEX_DAY, remove=True)
         words_hours = Words(words=self.words, pattern=Time.REGEX_HOUR, remove=True)
         words_id = Words(words=self.words, pattern=self.REGEX_WEEK_ID, remove=True)
+        self.hours = Hours(words_hours, words_id, Range(image.area.x1(),image.area.x2(), AxeType.ABSCISSA), self.image)
         self.days = self.__get_day(frames, words_days)
-        self.hours = self.__get_hour(Range(image.area.x1(),image.area.x2(), AxeType.ABSCISSA), words_hours)
         self.id = self.__get_id(words_id)
         self.classes = self.__get_classes(frames)
-        self.time_axe = self.__get_time_axe()
         
     def __get_day(self, frames: list, words_days: Words) -> Words:
         days = deepcopy(words_days)
@@ -34,35 +34,6 @@ class Week:
                     day.resize(frame)
                     day.content = timedelta(days=Time.DAYS[day.content])
         return days
-        
-    def __get_hour(self, margin: Range, words_hours: Words) -> Words:
-        hours = deepcopy(words_hours)
-        for hour in hours.list:
-            hour.content = int(hour.content.replace('h','')) # transform '10h' in '10'
-            hour.p1.x = hour.p1.x - 7 # hour space between word (10h) and de border of the hour cell
-        hours.list.sort(key=lambda x: x.p1.x)
-        for i in range(0,len(hours.list) - 1): # match right hour border with the next hour
-            hours.list[i].p2.x = hours.list[i + 1].p1.x - 1
-        if len(hours.list):
-            hours.add(Area(p1=Point(margin.a + 3, hours.first().y1()), p2=Point(hours.first().x1() - 1, hours.first().y2()), content=hours.first().content - 1),0) # add first hour (7h)
-            self.__fix_last_hour(hours, margin)
-        return hours
-                    
-    def __fix_last_hour(self, hours: Words, margin: Range):
-        hours.last().p2.x = margin.b - 3 # match last hour with the border
-        last = hours.last()
-        reference = hours.list[len(hours.list) - 2] # we take the second to last hour as reference
-        if abs(reference.w() - last.w()) > abs(reference.w()/2 - last.w()): #not full time
-            last.p2.x = last.p2.x + last.w()
-    
-    def __get_time_axe(self) -> Axe:
-        time_axe = Axe()
-        for hour in self.hours.list:
-            for i in range(0,4): # cut hours in quarters
-                time_axe.add(hour.x1() + (hour.w()/4)*i,timedelta(hours=hour.content, minutes=i*15))
-        if len(self.hours.list):
-            time_axe.add(self.hours.last().x2(),timedelta(hours=self.hours.last().content + 1, minutes=0))
-        return time_axe        
     
     def __get_id(self, word_id: Words) -> int:
         if word_id != 0 and len(word_id.list) != 0:
@@ -96,7 +67,7 @@ class Week:
         for c in self.classes:
             sub_img = self.image.sub(c, False)
             yellow_percent = sub_img.percent_color(Color.YELLOW, False)
-            courses.append(Course(self.time_axe, c, self.days, self.time, yellow_percent))
+            courses.append(Course(self.hours.time_axe, c, self.days, self.time, yellow_percent))
         return courses
         
     def frame_words(self) -> None:
@@ -118,7 +89,9 @@ class Week:
 class Hours:
     def __init__(self, words_hours: Words, words_id: Words, margin : Range, week_image: Image) -> None:
         self.image = self.__get_image(words_hours, words_id, margin, week_image)
-        lines = self.__detect_time_scale(words_hours)
+        lines = self.__detect_time_scale()
+        hour_axe = self.__get_hours_axe(words_hours, lines, margin)
+        self.time_axe = self.__get_time_axe(lines, hour_axe)
     
     def __get_image(self, words_hours: Words, words_id: Words, margin : Range, week_image: Image) -> Image:
         image = None
@@ -135,9 +108,9 @@ class Hours:
                 image.frame(wi, 255, -1)
         return image
             
-    def __detect_time_scale(self, words_hours: Words):
+    def __detect_time_scale(self) -> list:
         lines = []
-        if len(words_hours.list):
+        if self.image is not None:
             one_d = self.image.one_dimension(True)
             i = 0
             while i < len(one_d):
@@ -148,6 +121,54 @@ class Hours:
                 else:
                     i+=1
         return lines
+    
+    def __get_hours_axe(self, words_hours: Words, lines: list, margin: Range) -> Axe:
+        hour_axe = Axe()
+        if len(words_hours.list):
+            hour = int(words_hours.first().content.replace('h','')) - 1
+            hour_axe.add(margin.a, hour)
+        words_hours.list.sort(key=lambda x: x.p1.x)
+        for wh in words_hours.list:
+            hour = int(wh.content.replace('h',''))
+            middle = wh.middle(AxeType.ABSCISSA)
+            i = -1
+            while((i + 1) < len(lines) and lines[i + 1] < middle):
+                i+=1
+            hour_axe.add(lines[i], hour)
+        if len(words_hours.list) and (len(lines) - 1 - i > 2):
+            hour = int(words_hours.last().content.replace('h','')) + 1
+            hour_axe.add(lines[len(lines) - 1], hour)
+        return hour_axe
+    
+    def __get_time_axe(self, lines: list, hour_axe: Axe):
+        list_key = list(hour_axe)
+        time_axe = Axe()
+        matrice_hour = self.__sublist_hour(lines, list_key)
+        for lst in matrice_hour:
+            hour = hour_axe[lst[0]]
+            if len(lst) == 3:
+                lst.insert(1, int((lst[0] + lst[1])/2))
+            elif len(lst) != 4 and len(lst) != 1:
+                nexts = [l for l in lines if l > lst[len(lst) - 1]]
+                if len(nexts):
+                    step = (nexts[0] - lst[0])/4
+                    lst = [int(lst[0] + i*step) for i in range(0,4)]
+            for id, element in enumerate(lst):
+                time_axe.add(element,timedelta(hours=hour, minutes=15*id))
+        return time_axe
+    
+    def __sublist_hour(self, lines: list, list_key: list):
+        matrice_hour: List[list] = []
+        id_key,id_line = 0,0
+        while(id_key + 1 < len(list_key)):
+            matrice_hour.append([lines[id_line]])
+            id_line+=1
+            while(id_line < len(lines) and lines[id_line] < list_key[id_key + 1]):
+                matrice_hour[id_key].append(lines[id_line])
+                id_line+=1
+            id_key+=1
+        return matrice_hour        
+            
 
 class Group(Enum):
     ALL = 0
