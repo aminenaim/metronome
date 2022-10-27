@@ -1,0 +1,16 @@
+{
+    "level":"L1, M1, M2", 
+    "workdir":"output",
+    "output":"output/ics",
+    "detect": true,
+    "print": false,
+    "force": true,
+    "time" : 900,
+    "ftp": {
+        "host":"your_host",
+        "port":21,
+        "user": "your_user",
+        "password": "your_password",
+        "ssl": true
+    }
+}

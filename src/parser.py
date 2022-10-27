@@ -8,7 +8,7 @@ from lib.document import Metadata, Page, Pdf
 from lib.schedule import Group, Week, Course
 from ics import Calendar, Event
 
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
         "\n"
         "Options:\n"
@@ -18,9 +18,9 @@ HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
         "   -l, --level=[LEVELS]    levels that must be parsed (l3, m1, m2), must be seperated by comma\n"
         "   -d, --detect            show detected element of pdf\n"
         "   -p, --print             print classes genarated in stdout\n"
-        "   -t, --time=[TIME]       use to loop each for the defined seconds\n"
+        "   -t, --time=[TIME]       run this script in a loop for every TIME seconds\n"
         "   --force                 force parsing of pdf even if it's the same than remote\n"
-        "   --ftp_test              test the ftp connexion\n"
+        "   --ftp_test              test ftp connexion\n"
         "   -h, --help              show helper for this script\n"
         "   --version               show version of script\n"
         "\n"
