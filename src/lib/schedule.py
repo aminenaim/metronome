@@ -2,36 +2,37 @@ from copy import deepcopy
 from datetime import timedelta
 from enum import Enum
 import re
-from typing import List
+from typing import List, Tuple
 from lib.geometry import Area, Axe, AxeType, Point, Range, AreaList
 from lib.image import Color, Image
 from lib.time import Time
 
 
 class Week:
-    __RANGE_CLASS = Range(100,1000,AxeType.ABSCISSA)
+    __RANGE_CLASS = Range(80,1000,AxeType.ABSCISSA)
     
     REGEX_WEEK_ID = re.compile(r'^[Ss]?((\d)|([0-4]\d)|(5[0-3]))$')
     def __init__(self, image: Image , words: AreaList, time: Time) -> None:
         self.image = image
         self.words = words
         self.time = time
-        frames = self.image.find_contours(True, True, self.__RANGE_CLASS)
+        self.frames = self.image.find_contours(True, True, self.__RANGE_CLASS)
         words_days = self.words.match(Time.REGEX_DAY, remove=True)
         words_hours = self.words.match(pattern=Time.REGEX_HOUR, remove=True)
         words_id = self.words.match(pattern=self.REGEX_WEEK_ID, remove=True)
         self.hours = Hours(words_hours, words_id, Range(image.area.x1(),image.area.x2(), AxeType.ABSCISSA), self.image)
-        self.days = self.__get_day(frames, words_days)
+        self.days = self.__get_day(self.frames, words_days)
         self.id = self.__get_id(words_id)
-        self.classes = self.__get_classes(frames)
+        self.classes = self.__get_classes(self.frames)
         
     def __get_day(self, frames: AreaList, words_days: AreaList) -> AreaList:
         days = deepcopy(words_days)
         for day in days:
             for frame in frames:
-                if frame.in_bound(day.center()):
+                if frame.in_bound(day.center()) and day.h() < frame.h():
                     day.resize(frame)
-                    day.content = timedelta(days=Time.DAYS[day.content])
+        for day in days:
+            day.content = timedelta(days=Time.DAYS[day.content])
         return days
     
     def __get_id(self, word_id: AreaList) -> int:
@@ -42,6 +43,7 @@ class Week:
     
     def __get_classes(self, frames: AreaList) -> AreaList:
         classes = []
+        self.__remove_overlapping(frames)
         for frame in frames:
             frame.content = [] # add words to each class frame
             for word in self.words: 
@@ -49,7 +51,6 @@ class Week:
                     frame.content.append(word.content)
             if len(frame.content) != 0: # remove frame without content
                 classes.append(frame)
-            self.__remove_overlapping(classes)
         return classes
 
     def __remove_overlapping(self, classes: AreaList) -> None:
@@ -66,7 +67,9 @@ class Week:
         for c in self.classes:
             sub_img = self.image.sub(c, False)
             yellow_percent = sub_img.percent_color(Color.YELLOW, False)
-            courses.append(Course(self.hours.time_axe, c, self.days, self.time, yellow_percent))
+            course = Course(self.hours.time_axe, c, self.days, self.time, yellow_percent)
+            if course.day is not None:
+                courses.append(course)
         return courses
         
     def frame_words(self) -> None:
@@ -74,6 +77,8 @@ class Week:
             self.image.frame(a)
     
     def frame_elements(self) -> None:
+        for a in self.frames:
+            self.image.frame(a,(216,191,216))
         for a in self.classes:
             self.image.frame(a)
         for a in self.days:
@@ -199,13 +204,13 @@ class Course:
     __PERCENT_YELLOW_EXAM = 10
     
     def __init__(self, hour_axe: Axe, course_area: Area, days: AreaList, week_time: Time, yellow_percent: int) -> None:
-        day = self.__get_day(days, course_area)
-
-        self.begin = week_time.get_time(hour=hour_axe.closest(course_area.x1()), day=day.content, timezone="Europe/Paris")
-        self.end = week_time.get_time(hour=hour_axe.closest(course_area.x2()), day=day.content, timezone="Europe/Paris")
-        self.group = self.__get_group(day, course_area)
-        self.name, self.teacher, self.location = self.__get_content(course_area, self.group)
-        self.exam = yellow_percent >= self.__PERCENT_YELLOW_EXAM
+        self.day = self.__get_day(days, course_area)
+        if self.day is not None:
+            self.begin = week_time.get_time(hour=hour_axe.closest(course_area.x1()), day=self.day.content, timezone="Europe/Paris")
+            self.end = week_time.get_time(hour=hour_axe.closest(course_area.x2()), day=self.day.content, timezone="Europe/Paris")
+            self.group = self.__get_group(self.day, course_area)
+            self.name, self.teacher, self.location = self.__get_content(course_area, self.group)
+            self.exam = yellow_percent >= self.__PERCENT_YELLOW_EXAM
         
     def __get_day(self, days: AreaList, course_area: Area) -> Area:
         middle = course_area.middle(AxeType.ORDINATE)
@@ -222,7 +227,7 @@ class Course:
         else:
             return Group.GROUP2
     
-    def __get_content(self, course_area: Area, group: Group):
+    def __get_content(self, course_area: Area, group: Group) -> Tuple[str, str, str]:
         search_location = [self.__REGEX_LOCATION.search(e).group() for e in course_area.content if self.__REGEX_LOCATION.search(e)]
         for l in search_location:
             if l in course_area.content:
