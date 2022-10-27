@@ -8,7 +8,7 @@ from lib.document import Metadata, Page, Pdf
 from lib.schedule import Group, Week, Course
 from ics import Calendar, Event
 
-VERSION = '1.2.1'
+VERSION = '1.2.2'
 HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
         "\n"
         "Options:\n"
@@ -181,13 +181,13 @@ def gen_calendars(courses: List[Course], level: str, ics_dir: str) -> None:
    calendar = {Group.ALL:Calendar(creator=periodid), Group.GROUP1:Calendar(creator=periodid), Group.GROUP2:Calendar(creator=periodid), 'Exam':Calendar(creator=periodid)}
    name = {Group.ALL:f'{level}A', Group.GROUP1:f'{level}G1', Group.GROUP2:f'{level}G2', 'Exam':f'{level}E'}
    for c in courses:
+      grp = grp_name[c.group]
       if c.exam:
-         grp = grp_name[c.group]
          call: Calendar = calendar['Exam']
-         e = Event(name=c.name, description='Prof: ' + c.teacher + ' <br> ' + grp, location=c.location, begin=c.begin, end=c.end)         
+         e = Event(name=c.name, organizer=c.teacher, attendees=[grp], location=c.location, begin=c.begin, end=c.end)         
       else:
          call: Calendar = calendar[c.group]
-         e = Event(name=c.name, description='Prof: ' + c.teacher, location=c.location, begin=c.begin, end=c.end)
+         e = Event(name=c.name, organizer=c.teacher, attendees=[grp], location=c.location, begin=c.begin, end=c.end)
       call.events.add(e)
    for g, n in name.items():
       print(f"{level} : Creating {n}.ics")

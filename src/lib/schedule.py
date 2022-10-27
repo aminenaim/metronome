@@ -137,10 +137,10 @@ class Hours:
                 i+=1
             hour_axe.add(lines[i], hour)
         if len(words_hours):
-            self.__add_last_hour(words_hours, lines, hour_axe, i)
+            self.__add_last_hour(words_hours, lines, hour_axe)
         return hour_axe
     
-    def __add_last_hour(self, words_hours: AreaList, lines: List[int], hour_axe: Axe, i: int):
+    def __add_last_hour(self, words_hours: AreaList, lines: List[int], hour_axe: Axe):
         hour = int(words_hours.last().content.replace('h','')) + 1
         list_hour = list(hour_axe)
         lenght_previous_hour = abs(list_hour[len(list_hour) - 2] - list_hour[len(list_hour) - 1])
@@ -195,7 +195,7 @@ class Group(Enum):
 
 class Course:
     __REGEX_LOCATION = re.compile(r'[a-z-A-Z]\d-.*|Amphi .*|.*Zoom|.*ZOOM')
-    __REGEX_TEACHER = re.compile(r'( \([A-Z]{2,3}\)$)|( \([A-Z]{2,3}\/[A-Z]{2,3}\)$)')
+    __REGEX_TEACHER = re.compile(r'( \([A-Z]{2,3}\)$)|( \([A-Z]{2,3}\/[A-Z]{2,3}\)$)|(-\s*[A-Z]{2,3}$)')
     __PERCENT_YELLOW_EXAM = 10
     
     def __init__(self, hour_axe: Axe, course_area: Area, days: AreaList, week_time: Time, yellow_percent: int) -> None:
@@ -240,7 +240,7 @@ class Course:
             search_teacher = self.__REGEX_TEACHER.search(course_area.content[0])
             result = search_teacher.group(0) if search_teacher else ""
             name = course_area.content[0].replace(result,'')
-            teacher = re.sub(r'[ \)\(]','',result)
+            teacher = re.sub(r'[ \)\(]\-','',result)
         return name, teacher, location
     
     def __str__(self):
