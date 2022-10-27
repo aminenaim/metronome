@@ -105,7 +105,6 @@ class Pdf:
         return len(self.pdf_pages)
 
 class Page:
-    __AVG_WEEK = 300
     __RANGE_WEEK = Range(1900, 2200, AxeType.ABSCISSA)
     
     def __init__(self, image: Image , words: AreaList, id: int) -> None:
@@ -113,7 +112,7 @@ class Page:
         self.id = id
         self.words = words
         self.times = self.__gen_week_time()
-        self.week_coordinate = self.image.find_contours(False, False, self.__RANGE_WEEK, self.__AVG_WEEK)
+        self.week_coordinate = self.image.find_contours(False, False, self.__RANGE_WEEK)
 
     def __gen_week_time(self) -> AreaList:
         times = self.words.match(pattern=Time.REGEX_WEEK, remove=True)
@@ -125,16 +124,17 @@ class Page:
         weeks = []
         for c in self.week_coordinate:
             r: Range = c.to_range(AxeType.ORDINATE)
+            times = []
             for t in self.times:
                 if r.in_bound(t):
-                    time: Time = t.content
+                    times.append(t.content)
             image = self.image.sub(c)
             # make sure there is contour around the week
             image.frame(image.area, color=(0,0,0), size=5)
             image.frame(image.area, color=0, size=5)
             week_word = self.words.contained(c)
             week_word.change_origin(c.p1)
-            week = Week(image, week_word, time)
+            week = Week(image, week_word, times, weeks)
             weeks.append(week)
         return weeks
 

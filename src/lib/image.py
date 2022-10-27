@@ -20,7 +20,7 @@ class Image:
         h, w, _ = self.color.shape
         self.area = Area(Point(0,0), Point(w,h))
         
-    def find_contours(self, dilate: bool = False, all: bool = True, width: Range = None, avg_height: int = None) -> AreaList:
+    def find_contours(self, dilate: bool = False, all: bool = True, width: Range = None) -> AreaList:
         _, modified_image = cv2.threshold(self.gray, 130, 255, cv2.THRESH_BINARY_INV)
         mode = cv2.RETR_TREE if all else cv2.RETR_EXTERNAL
         if dilate:
@@ -31,13 +31,9 @@ class Image:
         for contour in contours:
             x,y,w,h = cv2.boundingRect(contour)
             area = Area(x=x,y=y,w=w,h=h)
-
             if width is None or width.between(area.w()):
-                if avg_height is None:
-                    coordinates.append(area)
-                else:
-                    nb_slices = round(area.h()/avg_height)
-                    coordinates = coordinates + area.slice(nb_slices, AxeType.ORDINATE)
+                coordinates.append(area)
+
         return coordinates
     
     def percent_color(self, color: Color, gray: bool):
@@ -69,9 +65,9 @@ class Image:
     
     def sub(self, margin: Area = Area(Point(0,0),Point(0,0)), copy_img: bool = True) -> 'Image':
         if copy_img:
-            return Image(margin=Area(margin.p1, margin.p2), img=copy.deepcopy(self.color))
+            return Image(margin=margin, img=copy.deepcopy(self.color))
         else:
-            return Image(margin=Area(margin.p1, margin.p2), img=self.color)
+            return Image(margin=margin, img=self.color)
 
     def show(self, title: str = "", color: bool = True) -> None:
         cv2.imshow(title,self.color if color else self.gray)
