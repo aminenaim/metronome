@@ -86,4 +86,6 @@ You have to set :
 - a config volume mapped on `/config`
 - a volume for ics output mapped on `/output` (optional)
 
+### Deploy
+
 You can use the [docker compose](docker-compose.yml) file to deploy it (volume map has to be changed)
