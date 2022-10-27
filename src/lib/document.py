@@ -135,7 +135,8 @@ class Page:
             week_word = self.words.contained(c)
             week_word.change_origin(c.p1)
             week = Week(image, week_word, times, weeks)
-            weeks.append(week)
+            if hasattr(week,'days'):
+                weeks.append(week)
         return weeks
 
     def frame_elements(self) -> None:

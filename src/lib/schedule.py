@@ -16,6 +16,8 @@ class Week:
         self.words = words
         self.frames = self.image.find_contours(True, True, self.__RANGE_CLASS)
         words_days = self.words.match(Time.REGEX_DAY, remove=True)
+        if not len(words_days) or not len(times):
+            return
         words_id = self.words.match(pattern=self.REGEX_WEEK_ID, remove=True)
         self.__resize_words(self.frames, words_days, words_id)
         if self.__detect_multiple_weeks(words_days):
@@ -38,8 +40,8 @@ class Week:
         return duplicate
     
     def __get_separation_point_weeks(self, words_days: AreaList, words_id: AreaList) -> Tuple[int,int]:
-        words_days.sort(key=lambda x: x.p1.y)
-        words_id.sort(key=lambda x: x.p1.y)
+        words_days.sort(key=lambda wd: wd.p1.y)
+        words_id.sort(key=lambda wi: wi.p1.y)
         days_id = 0
         while(days_id < len(words_days) - 1 and Time.DAYS[words_days[days_id].content] < Time.DAYS[words_days[days_id + 1].content]):
             days_id += 1
@@ -58,6 +60,7 @@ class Week:
         words_week2 = self.words.contained(area_week2, remove=True)
         words_week2 += words_days.contained(area_week2, remove=True)
         words_week2 += words_id.contained(area_week2, remove=True)
+        words_week2.change_origin(area_week2.p1)
         weeks.append(Week(image_week2, words_week2, times_week2, weeks))
     
     def __resize_words(self, frames: AreaList, words_days: AreaList, words_id: AreaList) -> None:
@@ -84,6 +87,7 @@ class Week:
     def __get_classes(self, frames: AreaList) -> AreaList:
         classes = []
         self.__remove_overlapping(frames)
+        frames.sort(key=lambda a: (a.p1.x, a.p1.y))
         for frame in frames:
             frame.content = [] # add words to each class frame
             for word in self.words: 
@@ -170,7 +174,7 @@ class Hours:
     
     def __get_hours_axe(self, words_hours: AreaList, lines: List[int], margin: Range) -> Axe:
         hour_axe = Axe()
-        words_hours.sort(key=lambda x: x.p1.x)
+        words_hours.sort(key=lambda wh: wh.p1.x)
         if len(words_hours):
             hour = int(words_hours.first().content.replace('h','')) - 1
             hour_axe.add(margin.a, hour)
@@ -278,9 +282,9 @@ class Course:
         location = "".join(search_location)
         if len(course_area.content) == 0:
             return 'Unknown','',location
-        if group == Group.ALL:
+        if len(course_area.content) > 1:
             name = course_area.content[0]
-            teacher = course_area.content[1] if len(course_area.content) > 1 else ''
+            teacher = course_area.content[1]
         else:
             search_teacher = self.__REGEX_TEACHER.search(course_area.content[0])
             result = search_teacher.group(0) if search_teacher else ""
