@@ -1,12 +1,16 @@
-import os, time, sys, getopt
-from typing import List
-import requests
+import getopt
+import os
+import sys
+import time
 import urllib
-from lib.environnement import Environnement
-from lib.ftp import ftp_handler
-from lib.document import Metadata, Page, Pdf
-from lib.schedule import Group, Week, Course
+from typing import List
+
+import requests
 from ics import Calendar, Event
+
+from files import Metadata, Page, Pdf
+from schedule import Course, Group, Week
+from utils import Environnement, FtpHandler
 
 VERSION = '1.2.3'
 HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
@@ -41,7 +45,7 @@ def ftp_test() -> None:
       It also list the files on the current directory
    """
    ftp_ident = ENV['FTP']
-   ftp = ftp_handler(ftp_ident)
+   ftp = FtpHandler(ftp_ident)
    print("FTP Connexion OK")
    print("Listing files from current directory :")
    ftp.list()
@@ -202,7 +206,7 @@ def send(level: str, ics_folder: str) -> None:
        ics_folder (str) : ics directory
    """
    ftp_ident = ENV['FTP']
-   ftp = ftp_handler(ftp_ident)
+   ftp = FtpHandler(ftp_ident)
    files = [f'{level}A', f'{level}G1', f'{level}G2', f'{level}E']
    for f in files:
       ftp.send_file(f'{f}.ics', ics_folder)
