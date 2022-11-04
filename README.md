@@ -1,6 +1,6 @@
 # Jackiebot
 
-Version 1.2.3
+Version 1.3.1
 
 This script parse STRI edt from pdf to ics format.
 

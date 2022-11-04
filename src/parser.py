@@ -6,13 +6,12 @@ import urllib
 from typing import List
 
 import requests
-from ics import Calendar, Event
 
 from files import Metadata, Page, Pdf
-from schedule import Course, Group, Week
+from schedule import Course, Week, EdtCalendar
 from utils import Environnement, FtpHandler
 
-VERSION = '1.2.3'
+VERSION = '1.3.1'
 HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
         "\n"
         "Options:\n"
@@ -96,10 +95,10 @@ def parsing_edt(level: str, url: str, workdir: str, ics_dir: str) -> None:
          print(f"{level} : Get courses")
          courses = gen_courses(level_workdir, weeks)
          print(f"{level} : Generate ics callendars")
-         gen_calendars(courses, level, ics_dir)
+         files_name = gen_calendars(courses, level, ics_dir)
          if ('FTP' in ENV):
             print(f"{level} : Sending files through ftp")
-            send(level, ics_dir)
+            send(files_name, ics_dir)
       else:
          print("Skiping, local pdf is older than remote pdf")
    except (requests.exceptions.ConnectionError, urllib.error.URLError):
@@ -170,35 +169,24 @@ def gen_courses(level_workdir: str, weeks: List[Week]) -> List[Course]:
       print_courses(courses)
    return courses
 
-def gen_calendars(courses: List[Course], level: str, ics_dir: str) -> None:
+def gen_calendars(courses: List[Course], level: str, ics_dir: str) -> List[str]:
    """Generate ics callendar using generated courses 
 
    Args:
        courses (list): generated courses from pdf
        level (str): course level
        ics_dir (str): ics directory
+      
+   Returns:
+       list: list of the files names generated
    """
    mkdir_if_not_exists(ics_dir)
    print(f"{level} : Generating Callendars")
-   grp_name = {Group.ALL:'All', Group.GROUP1:'Groupe 1', Group.GROUP2:'Groupe 2'}
-   periodid = "-//Google Inc//Google Calendar 70.9054//EN" # TODO find a better solution to render HTML
-   calendar = {Group.ALL:Calendar(creator=periodid), Group.GROUP1:Calendar(creator=periodid), Group.GROUP2:Calendar(creator=periodid), 'Exam':Calendar(creator=periodid)}
-   name = {Group.ALL:f'{level}A', Group.GROUP1:f'{level}G1', Group.GROUP2:f'{level}G2', 'Exam':f'{level}E'}
-   for c in courses:
-      grp = grp_name[c.group]
-      if c.exam:
-         call: Calendar = calendar['Exam']
-         e = Event(name=c.name, organizer=c.teacher, attendees=[grp], location=c.location, begin=c.begin, end=c.end)         
-      else:
-         call: Calendar = calendar[c.group]
-         e = Event(name=c.name, organizer=c.teacher, attendees=[grp], location=c.location, begin=c.begin, end=c.end)
-      call.events.add(e)
-   for g, n in name.items():
-      print(f"{level} : Creating {n}.ics")
-      with open(f'{ics_dir}/{n}.ics', 'w') as f:
-         f.write(str(calendar[g]))
+   calendar = EdtCalendar(courses, level)
+   calendar.save(directory=ics_dir)
+   return calendar.get_files_name()
 
-def send(level: str, ics_folder: str) -> None:
+def send(files_name: List[str], ics_folder: str) -> None:
    """Send generated ics files through ftp
 
    Args:
@@ -207,9 +195,8 @@ def send(level: str, ics_folder: str) -> None:
    """
    ftp_ident = ENV['FTP']
    ftp = FtpHandler(ftp_ident)
-   files = [f'{level}A', f'{level}G1', f'{level}G2', f'{level}E']
-   for f in files:
-      ftp.send_file(f'{f}.ics', ics_folder)
+   for fn in files_name:
+      ftp.send_file(fn, ics_folder)
    ftp.close()
 
 def detect_elements(week: Week, detect_folder: str) -> None:
