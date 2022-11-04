@@ -110,20 +110,20 @@ class Image:
                     ref.value[0][1] <= value[1] and value[1] <= ref.value[1][1] and
                     ref.value[0][2] <= value[2] and value[2] <= ref.value[1][2])
     
-    def sub(self, margin: Area = Area(Point(0,0),Point(0,0)), copy_img: bool = True) -> 'Image':
+    def sub(self, area: Area = Area(Point(0,0),Point(0,0)), copy_img: bool = True) -> 'Image':
         """Create a sub image from this one
 
         Args:
-            margin (Area, optional): the area where image is taken from. Defaults to Area(Point(0,0),Point(0,0)).
+            area (Area, optional): the area where image is taken from. Defaults to Area(Point(0,0),Point(0,0)).
             copy_img (bool, optional): Whether created image should be a copy of the original . Defaults to True.
 
         Returns:
             Image: sub image created
         """
         if copy_img:
-            return Image(margin=margin, img=copy.deepcopy(self.color))
+            return Image(margin=area, img=copy.deepcopy(self.color))
         else:
-            return Image(margin=margin, img=self.color)
+            return Image(margin=area, img=self.color)
 
     def show(self, title: str = "", color: bool = True) -> None:
         """Show the image in another windows
