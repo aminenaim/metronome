@@ -50,7 +50,7 @@ class Hours:
             hour_axe.add(margin.a, hour)
         for wh in words_hours:
             hour = int(wh.content.replace('h',''))
-            middle = wh.middle(AxeType.ABSCISSA)
+            middle = wh.center().x
             i = -1
             while((i + 1) < len(lines) and lines[i + 1] < middle):
                 i+=1

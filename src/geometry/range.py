@@ -31,4 +31,5 @@ class Range:
     def between(self, value: int) -> bool:
         return self.a <= value and value <= self.b
 
+# prevent circular import
 from . import area

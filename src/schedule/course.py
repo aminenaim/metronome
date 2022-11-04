@@ -23,7 +23,7 @@ class Course:
             self.exam = yellow_percent >= self.__PERCENT_YELLOW_EXAM
         
     def __get_day(self, days: AreaList, course_area: Area) -> Area:
-        middle = course_area.middle(AxeType.ORDINATE)
+        middle = course_area.center().y
         for d in days:
             full_day: Range = d.to_range(AxeType.ORDINATE)
             if full_day.between(middle):
@@ -32,7 +32,7 @@ class Course:
     def __get_group(self, day: Area, course_area: Area) -> Group:
         if abs(day.h() - course_area.h()) < abs(day.h()/2 - course_area.h()): # closest size (entire or half)
             return Group.ALL
-        if course_area.middle(AxeType.ORDINATE) <= day.middle(AxeType.ORDINATE):
+        if course_area.center().y <= day.center().y:
             return Group.GROUP1
         else:
             return Group.GROUP2
