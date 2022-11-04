@@ -30,6 +30,10 @@ class Time:
         if month > 7 and today.month < 7:
             return today.year - 1
         return today.year
+
+    @classmethod
+    def today(cls):
+        return datetime.utcnow().replace(tzinfo=pytz.timezone(cls.TIMEZONE))
         
     def __str__(self) -> str:
         return str(self.value)

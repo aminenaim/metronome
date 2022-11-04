@@ -1,9 +1,10 @@
 
-from icalendar import Calendar, Event, vCalAddress, vText
-from typing import List
+from icalendar import Calendar, Event, vText
+from typing import List, Tuple
 
 from .group import Group
 from .course import Course
+from .time import Time
 
 
 class EdtCalendar:
@@ -29,15 +30,18 @@ class EdtCalendar:
             event.add('summary',c.name)
             event.add('dtstart',c.begin)
             event.add('dtend', c.end)
+            event.add('dtstamp', Time.today())
             event.add('location', vText(c.location))
             if c.teacher != '':
-                event.add('organizer', self.__person(name=c.teacher, mail='prof@stri.fr', role='CHAIR', status='ACCEPTED', group=False), encode=0)
-            event.add('attendee', self.__person(name=c.get_group_name(), mail=f'{str(c.group).lower()}@stri.fr', role='REQ-PARTICIPANT', status='ACCEPTED', group=True), encode=0)
+                v,p = self.__person(name=c.teacher, mail='prof@stri.fr', role='CHAIR', status='ACCEPTED', group=False)
+                event.add(name='organizer', value=v, parameters=p, encode=1)
+            v,p = self.__person(name=c.get_group_name(), mail=f'{str(c.group).lower()}@stri.fr', role='REQ-PARTICIPANT', status='ACCEPTED', group=True)
+            event.add('attendee', value=v, parameters=p, encode=1)
             call.add_component(event)
     
-    def __person(self, name:str, mail: str, role: str, status: str, group: bool) -> vCalAddress:
+    def __person(self, name:str, mail: str, role: str, status: str, group: bool) ->Tuple[str,dict]:
         cutype = 'GROUP' if group else 'INDIVIDUAL'
-        return vCalAddress(f'CUTYPE={cutype};ROLE={role};PARTSTAT={status};CN={name};MAILTO:{mail}')
+        return f'MAILTO:{mail}', {'CUTYPE':cutype, 'ROLE':role, 'PARTSTAT':status, 'CN':name}
 
     def save(self, directory: str):
         for g, n in self.name.items():
