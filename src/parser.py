@@ -117,7 +117,7 @@ def edt_need_update(url : str, level_workdir : str) -> bool:
    Returns:
        bool: True if edt need update, False otherwise
    """
-   return ('FORCE' in ENV and ENV['FORCE']) or Metadata.check_update(url, level_workdir, Pdf.PDF_NAME)
+   return ('FORCE' in ENV and ENV['FORCE']) or Metadata.check_update(url, f'{level_workdir}/{Pdf.PDF_NAME}')
 
 def gen_weeks(level_workdir: str, pages: List[Page]) -> List[Week]:
    """Generate weeks from pages
