@@ -90,6 +90,7 @@ def parsing_edt(level: str, url: str, workdir: str, ics_dir: str) -> None:
          pdf = Pdf(url ,level_workdir)
          print(f"{level} : Processing and parsing images and words")
          pages = pdf.gen_pages()
+         pdf.del_pages()
          print(f"{level} : Gen weeks")
          weeks = gen_weeks(level_workdir, pages)
          print(f"{level} : Get courses")
