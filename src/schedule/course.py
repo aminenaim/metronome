@@ -26,7 +26,7 @@ class Course:
         middle = course_area.center().y
         for d in days:
             full_day: Range = d.to_range(AxeType.ORDINATE)
-            if full_day.between(middle):
+            if full_day.is_contained(middle):
                 return d
     
     def __get_group(self, day: Area, course_area: Area) -> Group:

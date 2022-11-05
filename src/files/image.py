@@ -52,7 +52,7 @@ class Image:
         for contour in contours:
             x,y,w,h = cv2.boundingRect(array=contour)
             area = Area(x=x,y=y,w=w,h=h)
-            if width is None or width.between(value=area.w()):
+            if width is None or width.is_contained(value=area.w()):
                 coordinates.append(area)
         return coordinates
     

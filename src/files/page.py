@@ -49,7 +49,7 @@ class Page:
             r: Range = c.to_range(axe=AxeType.ORDINATE)
             times = []
             for t in self.dates:
-                if r.in_bound(area=t):
+                if r.is_between(area=t):
                     times.append(t.content)
             image = self.image.sub(area=c)
             # make sure there is contour around the week
