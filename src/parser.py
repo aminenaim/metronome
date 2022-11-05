@@ -91,11 +91,11 @@ def parsing_edt(level: str, url: str, workdir: str, ics_dir: str) -> None:
          print(f"{level} : Processing and parsing images and words")
          pages = pdf.gen_pages()
          pdf.del_pages()
-         print(f"{level} : Gen weeks")
+         print(f"{level} : Gen weeks from {len(pages)} pages")
          weeks = gen_weeks(level_workdir, pages)
-         print(f"{level} : Get courses")
+         print(f"{level} : Get courses from {len(weeks)} weeks")
          courses = gen_courses(level_workdir, weeks)
-         print(f"{level} : Generate ics callendars")
+         print(f"{level} : Generate ics callendars from {len(courses)} courses")
          files_name = gen_calendars(courses, level, ics_dir)
          if ('FTP' in ENV):
             print(f"{level} : Sending files through ftp")
@@ -137,7 +137,7 @@ def gen_weeks(level_workdir: str, pages: List[Page]) -> List[Week]:
          detect_words(page, f'{level_workdir}/detected')
    i = 0
    time_axe_ref = None
-   while i <= len(weeks) and time_axe_ref is None: # get a reference 
+   while i < len(weeks) and time_axe_ref is None: # get a reference 
       if len(weeks[i].hours.time_axe):
          time_axe_ref = weeks[i].hours
       i+=1
