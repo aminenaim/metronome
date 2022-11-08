@@ -13,8 +13,8 @@ class EdtCalendar:
     
     def __init__(self, courses: List[Course], level: str) -> None:
         self.level = level
-        self.name = {Group.ALL:f'{level}A', Group.GROUP1:f'{level}G1', Group.GROUP2:f'{level}G2', 'Exam':f'{level}E'}
-        self.calendar = {Group.ALL:Calendar(), Group.GROUP1:Calendar(), Group.GROUP2:Calendar(), 'Exam':Calendar()}
+        self.name = {Group.ALL:f'{level}A', Group.GROUP1:f'{level}G1', Group.GROUP2:f'{level}G2', 'Exam':f'{level}E', 'Full':f'{level}'}
+        self.calendar = {Group.ALL:Calendar(), Group.GROUP1:Calendar(), Group.GROUP2:Calendar(), 'Exam':Calendar(), 'Full':Calendar()}
         for c in self.calendar:
             self.calendar[c].add('prodid', self.__PERIODID)
             self.calendar[c].add('version', self.__VERSION)
@@ -35,10 +35,11 @@ class EdtCalendar:
             if c.teacher != '':
                 v,p = self.__person(name=c.teacher, mail=c.teacher, role='CHAIR', status='ACCEPTED', group=False)
                 event.add(name='organizer', value=v, parameters=p, encode=1)
-            v,p = self.__person(name=c.get_group_name(), mail=str(c.group).lower().replace(' ',''), role='REQ-PARTICIPANT', status='ACCEPTED', group=True)
+            v,p = self.__person(name=str(c.group), mail=str(c.group).lower().replace(' ',''), role='REQ-PARTICIPANT', status='ACCEPTED', group=True)
             event.add('attendee', value=v, parameters=p, encode=1)
-            event.add('description',self.__description(c.teacher,str(c.group)))
+            event.add('description',self.__description(c.teacher, str(c.group)))
             call.add_component(event)
+            self.calendar['Full'].add_component(event)
     
     def __person(self, name:str, mail: str, role: str, status: str, group: bool) ->Tuple[str,dict]:
         cutype = 'GROUP' if group else 'INDIVIDUAL'

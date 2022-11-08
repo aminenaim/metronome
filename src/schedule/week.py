@@ -90,7 +90,7 @@ class Week:
     def __get_classes(self, frames: AreaList) -> AreaList:
         classes = AreaList()
         self.__remove_overlapping(frames)
-        frames.sort(key=lambda a: (a.p1.x, a.p1.y))
+        self.words.sort(key=lambda a: a.p1.y)
         for frame in frames:
             frame.content = [] # add words to each class frame
             for word in self.words: 

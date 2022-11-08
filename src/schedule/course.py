@@ -11,7 +11,6 @@ class Course:
     __REGEX_LOCATION = re.compile(r'[a-zA-Z]\d-.*|\dA-.*|Amphi .*|.*Zoom|.*ZOOM')
     __REGEX_TEACHER = re.compile(r'( \([A-Z]{2,3}\)$)|( \([A-Z]{2,3}\/[A-Z]{2,3}\)$)|(-\s*[A-Z]{2,3}$)')
     __PERCENT_YELLOW_EXAM = 10
-    __GRP_NAME = {Group.ALL:'All', Group.GROUP1:'Groupe 1', Group.GROUP2:'Groupe 2'}
     
     def __init__(self, hour_axe: Axe, course_area: Area, days: AreaList, week_time: Time, yellow_percent: int) -> None:
         self.day = self.__get_day(days, course_area)
@@ -57,9 +56,6 @@ class Course:
             name = course_area.content[0].replace(result,'')
             teacher, _ = re.subn(r'[ \)\(\-]','',result)
         return name, teacher, location
-    
-    def get_group_name(self):
-        return self.__GRP_NAME[self.group]
     
     def __str__(self):
         return f'{self.name} : B[{self.begin}] - E[{self.end}] - L[{self.location}] - T[{self.teacher}]] - G[{self.group}] E[{self.exam}]'
