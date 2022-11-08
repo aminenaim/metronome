@@ -33,15 +33,19 @@ class EdtCalendar:
             event.add('dtstamp', Time.today())
             event.add('location', vText(c.location))
             if c.teacher != '':
-                v,p = self.__person(name=c.teacher, mail='prof@stri.fr', role='CHAIR', status='ACCEPTED', group=False)
+                v,p = self.__person(name=c.teacher, mail=c.teacher, role='CHAIR', status='ACCEPTED', group=False)
                 event.add(name='organizer', value=v, parameters=p, encode=1)
-            v,p = self.__person(name=c.get_group_name(), mail=f'{str(c.group).lower()}@stri.fr', role='REQ-PARTICIPANT', status='ACCEPTED', group=True)
+            v,p = self.__person(name=c.get_group_name(), mail=str(c.group).lower().replace(' ',''), role='REQ-PARTICIPANT', status='ACCEPTED', group=True)
             event.add('attendee', value=v, parameters=p, encode=1)
+            event.add('description',self.__description(c.teacher,str(c.group)))
             call.add_component(event)
     
     def __person(self, name:str, mail: str, role: str, status: str, group: bool) ->Tuple[str,dict]:
         cutype = 'GROUP' if group else 'INDIVIDUAL'
         return f'MAILTO:{mail}', {'CUTYPE':cutype, 'ROLE':role, 'PARTSTAT':status, 'CN':name}
+
+    def __description(self, teacher: str, group) -> str:
+        return '<br>'.join([x for x in [teacher,group] if x is not None and x != ''])
 
     def save(self, directory: str):
         for g, n in self.name.items():

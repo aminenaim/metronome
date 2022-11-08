@@ -7,5 +7,5 @@ class Group(Enum):
     GROUP2 = 2
     
     def __str__(self) -> str:
-        value = {Group.ALL: 'ALL', Group.GROUP1: 'GROUP1', Group.GROUP2: 'GROUP2'}
+        value = {Group.ALL: 'Classe Entière', Group.GROUP1: 'Groupe 1', Group.GROUP2: 'Groupe 2'}
         return value[self]

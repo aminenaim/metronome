@@ -8,7 +8,7 @@ from .time import Time
 
 
 class Course:
-    __REGEX_LOCATION = re.compile(r'[a-z-A-Z]\d-.*|Amphi .*|.*Zoom|.*ZOOM')
+    __REGEX_LOCATION = re.compile(r'[a-zA-Z]\d-.*|\dA-.*|Amphi .*|.*Zoom|.*ZOOM')
     __REGEX_TEACHER = re.compile(r'( \([A-Z]{2,3}\)$)|( \([A-Z]{2,3}\/[A-Z]{2,3}\)$)|(-\s*[A-Z]{2,3}$)')
     __PERCENT_YELLOW_EXAM = 10
     __GRP_NAME = {Group.ALL:'All', Group.GROUP1:'Groupe 1', Group.GROUP2:'Groupe 2'}
@@ -55,7 +55,7 @@ class Course:
             search_teacher = self.__REGEX_TEACHER.search(course_area.content[0])
             result = search_teacher.group(0) if search_teacher else ""
             name = course_area.content[0].replace(result,'')
-            teacher = re.sub(r'[ \)\(]\-','',result)
+            teacher, _ = re.subn(r'[ \)\(\-]','',result)
         return name, teacher, location
     
     def get_group_name(self):
