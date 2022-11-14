@@ -5,12 +5,12 @@
         "output":"output/ics",
         "time" : 900
     },
-    "ftp": {
+    "ftp": [{
         "host":"yourhost.com",
         "user": "your_user",
         "password": "your_password",
         "ssl": true
-    },
+    }],
     "schedules": {
         "L3": {
             "url":"https://l3_url"

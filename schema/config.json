@@ -41,41 +41,44 @@
             "required": ["output","workdir"]
         },
         "ftp": {
-            "type": "object",
-            "description": "FTP connexion parametters",
-            "additionalProperties": false,
-            "properties": {
-                "host": {
-                    "type": "string",
-                    "description": "Hostname of this connexion",
-                    "format": "hostname"
+            "type":"array",
+            "items": {
+                "type": "object",
+                "description": "FTP connexion parametters",
+                "additionalProperties": false,
+                "properties": {
+                    "host": {
+                        "type": "string",
+                        "description": "Hostname of this connexion",
+                        "format": "hostname"
+                    },
+                    "port": {
+                        "type": "number",
+                        "description": "Port of this connexion",
+                        "default": 21
+                    },
+                    "user": {
+                        "type": "string",
+                        "description": "User of this connexion"
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "Password of this connexion"
+                    },
+                    "folder": {
+                        "type": "string",
+                        "description": "Folder where the files should be added",
+                        "default": "/"
+                    },
+                    "ssl": {
+                        "type": "boolean",
+                        "description": "If set to true, this connexion will be over SSL-TLS",
+                        "default": true
+                    }
                 },
-                "port": {
-                    "type": "number",
-                    "description": "Port of this connexion",
-                    "default": 21
-                },
-                "user": {
-                    "type": "string",
-                    "description": "User of this connexion"
-                },
-                "password": {
-                    "type": "string",
-                    "description": "Password of this connexion"
-                },
-                "folder": {
-                    "type": "string",
-                    "description": "Folder where the files should be added",
-                    "default": "/"
-                },
-                "ssl": {
-                    "type": "boolean",
-                    "description": "If set to true, this connexion will be over SSL-TLS",
-                    "default": true
-                }
-            },
-            "required": ["host","user","password"]
-        }
+                "required": ["host","user","password"]
+            }
+        } 
     },
     "schedules": {
         "type": "object",

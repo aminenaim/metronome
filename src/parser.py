@@ -180,10 +180,11 @@ def send(files_name: List[str], ics_folder: str) -> None:
        ics_folder (str) : ics directory
    """
    ftp_ident = ENV['ftp']
-   ftp = FtpHandler(ftp_ident)
-   for fn in files_name:
-      ftp.send_file(fn, ics_folder)
-   ftp.close()
+   for session in ftp_ident:
+      ftp = FtpHandler(session)
+      for fn in files_name:
+         ftp.send_file(fn, ics_folder)
+      ftp.close()
 
 def detect_elements(week: Week, detect_folder: str) -> None:
    """Save detected elements on each week 
