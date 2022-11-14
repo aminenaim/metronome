@@ -1,16 +1,25 @@
 {
-    "level":"L1, M1, M2", 
-    "workdir":"output",
-    "output":"output/ics",
-    "detect": true,
-    "print": false,
-    "force": true,
-    "time" : 900,
+    "$schema": "../schema/config.json",
+    "general": {
+        "workdir":"output",
+        "output":"output/ics",
+        "time" : 900
+    },
     "ftp": {
-        "host":"your_host",
-        "port":21,
+        "host":"yourhost.com",
         "user": "your_user",
         "password": "your_password",
         "ssl": true
+    },
+    "schedules": {
+        "L3": {
+            "url":"https://l3_url"
+        },
+        "M1": {
+            "url":"https://m1_url"
+        },
+        "M2": {
+            "url":"https://m2_url"
+        }
     }
 }

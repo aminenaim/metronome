@@ -18,12 +18,10 @@ HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
         "   -w, --workdir=[WORKDIR]   temp folder used by the script\n"
         "   -o, --output=[OUTPUT]   output folder where ics are generated\n"
         "   -c, --config=[CONFIG]   config folder where config.json and data.json is located\n"
-        "   -l, --level=[LEVELS]    levels that must be parsed (l3, m1, m2), must be seperated by comma\n"
         "   -d, --detect            show detected element of pdf\n"
         "   -p, --print             print classes genarated in stdout\n"
         "   -t, --time=[TIME]       run this script in a loop for every TIME seconds\n"
         "   --force                 force parsing of pdf even if it's the same than remote\n"
-        "   --ftp_test              test ftp connexion\n"
         "   -h, --help              show helper for this script\n"
         "   --version               show version of script\n"
         "\n"
@@ -38,21 +36,11 @@ def help() -> None:
    """Print the help string 
    """
    print(HELP)
-   
-def ftp_test() -> None:
-   """Ftp connexion test provided by the user
-      It also list the files on the current directory
-   """
-   ftp_ident = ENV['FTP']
-   ftp = FtpHandler(ftp_ident)
-   print("FTP Connexion OK")
-   print("Listing files from current directory :")
-   ftp.list()
 
 def loop_time() -> None:
    """Loop for forever, with a delay of 'TIME' seconds (with TIME provided by the user through config/env/cli) 
    """
-   delay = int(ENV['TIME'])
+   delay = int(ENV['general']['time'])
    print(f"Starting script, with refresh delay of {delay} sec")
    while(True):
       processing_levels()
@@ -62,16 +50,13 @@ def loop_time() -> None:
 def processing_levels() -> None:
    """Process each level given by the user
    """
-   workdir, output, urls, levels = ENV['WORKDIR'], ENV['OUTPUT'], DATA['URL'], ENV['LEVEL'].upper().split(',')
+   workdir: str = ENV['general']['workdir'] 
+   output: str = ENV['general']['output']
+   schedules: dict = ENV['schedules']
    mkdir_if_not_exists(workdir)
-   for l in levels:
-      l = l.replace(" ", "") # remove free space
-      if l in urls.keys():
-         print(f"Processing {l} pdf")
-         parsing_edt(l, urls[l], workdir, output)
-      else:
-         print(f"Level {l} not found in data.json", file=sys.stderr)
-         exit(1)
+   for schedule, value in schedules.items():
+      print(f"Processing {schedule} pdf")
+      parsing_edt(schedule, value['url'], workdir, output)
 
 def parsing_edt(level: str, url: str, workdir: str, ics_dir: str) -> None:
    """Parse the edt into ics files and send them over ftp
@@ -97,7 +82,7 @@ def parsing_edt(level: str, url: str, workdir: str, ics_dir: str) -> None:
          courses = gen_courses(level_workdir, weeks)
          print(f"{level} : Generate ics callendars from {len(courses)} courses")
          files_name = gen_calendars(courses, level, ics_dir)
-         if ('FTP' in ENV):
+         if ('ftp' in ENV):
             print(f"{level} : Sending files through ftp")
             send(files_name, ics_dir)
       else:
@@ -118,7 +103,7 @@ def edt_need_update(url : str, level_workdir : str) -> bool:
    Returns:
        bool: True if edt need update, False otherwise
    """
-   return ('FORCE' in ENV and ENV['FORCE']) or Metadata.check_update(url, f'{level_workdir}/{Pdf.PDF_NAME}')
+   return ('force' in ENV['general'] and ENV['general']['force']) or Metadata.check_update(url, f'{level_workdir}/{Pdf.PDF_NAME}')
 
 def gen_weeks(level_workdir: str, pages: List[Page]) -> List[Week]:
    """Generate weeks from pages
@@ -133,7 +118,7 @@ def gen_weeks(level_workdir: str, pages: List[Page]) -> List[Week]:
    weeks: List[Week] = []
    for page in pages:
       weeks += page.gen_weeks()
-      if 'DETECT' in ENV and ENV['DETECT']:
+      if 'detect' in ENV['general'] and ENV['general']['detect']:
          detect_words(page, f'{level_workdir}/detected')
    i = 0
    time_axe_ref = None
@@ -159,14 +144,14 @@ def gen_courses(level_workdir: str, weeks: List[Week]) -> List[Course]:
    """
    courses: List[Course] = []
    for week in weeks:
-      if 'DETECT' in ENV and ENV['DETECT']:
+      if 'detect' in ENV['general'] and ENV['general']['detect']:
          detect_elements(week, f'{level_workdir}/detected')
       if len(week.days) and len(week.hours.time_axe):  
          courses += week.gen_courses()
       else:
          print(f"Wrong Week detected with {len(week.days)} days and {len(week.hours)} hours")
    courses.sort(key=lambda x: x.begin)
-   if 'PRINT' in ENV and ENV['PRINT']:
+   if 'print' in ENV['general'] and ENV['general']['print']:
       print_courses(courses)
    return courses
 
@@ -194,7 +179,7 @@ def send(files_name: List[str], ics_folder: str) -> None:
        level (str): course level
        ics_folder (str) : ics directory
    """
-   ftp_ident = ENV['FTP']
+   ftp_ident = ENV['ftp']
    ftp = FtpHandler(ftp_ident)
    for fn in files_name:
       ftp.send_file(fn, ics_folder)
@@ -248,12 +233,12 @@ def main(argv : list):
    Args:
        argv (list): list of argument and values pass by the user
    """
-   global ENV, DATA
+   global ENV
    ATTR = {}
    action = None
-   options, _ = getopt.getopt(argv, 'w:o:c:u:l:t:dpvh', ['workdir=','output=', 'config=', 'url=', 'level=', 'time=', 'detect', 'print', 'force', 'ftp_test', 'help',  'version'])
-   assign_map = {'-w':'WORKDIR', '--workdir':'WORKDIR', '-o':'OUTPUT', '--output':'OUTPUT', '-c':'CONFIG', '--config': 'CONFIG', '-u':'URL', '--url':'URL', '-l':'LEVEL', '--level':'LEVEL', '-d':'DETECT', '--detect':'DETECT', '-p':'PRINT', '--print':'PRINT', '--force':'FORCE', '-t':'TIME', '--time':'TIME'}
-   action_map = {'--ftp_test':ftp_test, '-h':help, '--help':help, '--version':version} 
+   options, _ = getopt.getopt(argv, 'w:o:c:u:l:t:dpvh', ['workdir=','output=', 'config=', 'url=', 'level=', 'time=', 'detect', 'print', 'force', 'help',  'version'])
+   assign_map = {'-w':'workdir', '--workdir':'workdir', '-o':'output', '--output':'output', '-c':'config', '--config': 'config', '-d':'detect', '--detect':'detect', '-p':'print', '--print':'print', '--force':'force', '-t':'time', '--time':'time'}
+   action_map = {'-h':help, '--help':help, '--version':version} 
    for opt, arg in options:
       in_maps = False
       if opt in assign_map.keys():
@@ -268,9 +253,8 @@ def main(argv : list):
          exit(1)
    
    ENV = Environnement.get_parametters(ATTR)
-   DATA = Environnement.get_data(ATTR)
    if action is None:
-      action = loop_time if ('TIME' in ENV) else processing_levels
+      action = loop_time if ('time' in ENV['general']) else processing_levels
    action()
    exit(0)
 

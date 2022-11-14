@@ -1,25 +1,95 @@
 {
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$id": "https://github.com/Jhiliano/jackiebot/blob/main/schema/config.json",
+    "title": "Jackiebot configuration file",
     "type": "object",
     "properties": {
-        "workdir": {"type": "string"},
-        "level": {"type": "string"},
-        "output": {"type": "string"},
-        "url": {"type": "string"},
-        "detect": {"type": "boolean", "default": false},
-        "print": {"type": "boolean", "default": false},
-        "force": {"type": "boolean", "default": false},
-        "time": {"type": "number"},
+        "general": {
+            "type": "object",
+            "description": "General configuation elements",
+            "additionalProperties": false,
+            "properties": {
+                "workdir": {
+                    "type": "string",
+                    "description": "Working directory of the application"
+                },
+                "output": {
+                    "type": "string",
+                    "description": "Output folder where ics should be generated"
+                },
+                "detect": {
+                    "type": "boolean", 
+                    "description": "Save detected element within the working directory (in 'detected' folder)",
+                    "default": false
+                },
+                "print": {
+                    "type": "boolean", 
+                    "description": "Dump the generated courses in stdout",
+                    "default": false
+                },
+                "force": {
+                    "type": "boolean",
+                    "description": "Parse pdf without checking the source metadata", 
+                    "default": false
+                },
+                "time": {
+                    "type": "number",
+                    "description": "Check schedule every given seconds",
+                    "minimum": 0
+                }
+            },
+            "required": ["output","workdir"]
+        },
         "ftp": {
             "type": "object",
+            "description": "FTP connexion parametters",
+            "additionalProperties": false,
             "properties": {
-                "host": {"type": "string", "format": "hostname"},
-                "port": {"type": "number", "default": 21},
-                "user": {"type": "string"},
-                "password": {"type": "string"},
-                "ssl": {"type": "boolean", "default": true}
+                "host": {
+                    "type": "string",
+                    "description": "Hostname of this connexion",
+                    "format": "hostname"
+                },
+                "port": {
+                    "type": "number",
+                    "description": "Port of this connexion",
+                    "default": 21
+                },
+                "user": {
+                    "type": "string",
+                    "description": "User of this connexion"
+                },
+                "password": {
+                    "type": "string",
+                    "description": "Password of this connexion"
+                },
+                "folder": {
+                    "type": "string",
+                    "description": "Folder where the files should be added",
+                    "default": "/"
+                },
+                "ssl": {
+                    "type": "boolean",
+                    "description": "If set to true, this connexion will be over SSL-TLS",
+                    "default": true
+                }
             },
             "required": ["host","user","password"]
         }
     },
-    "required": ["output","workdir"]
+    "schedules": {
+        "type": "object",
+        "description": "Data on schedules",
+        "additionalProperties": {
+            "type": "object",
+            "required" : ["url"],
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "URL of the schedule"
+                }
+            }
+        }
+    },
+    "required": ["general", "schedules"]
 }
