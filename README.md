@@ -24,12 +24,11 @@ Argument | Environnement variable | json parameter | Comment | Default value
 ---------|----------|---------|--------- | ---------
  `-w <folder>`, `--workdir <folder>` | `WORKDIR` | `workdir` | Temp folder used by the script | `None`
  `-o <folder>`, `--output <folder>` | `OUTPUT` | `output` |  Output folder where ics are generated | `None`
- `-c <folder>`, `--config <folder>` | `CONFIG` | `config` | Config folder where config.json and data.json is located | `config/`
+ `-c <folder>`, `--config <file>` | `CONFIG` | `config` | Config file is localisation | `config/config.json`
  `-d`, `--detect` | `DETECT` | `detect` | Save detected element of pdf in the temp folder | `false`
  `-p`, `--print` | `PRINT` | `print` | Print classes genarated in stdout | `false`
  `-t <seconds>`, `--time <seconds>` | `TIME` | `time` | Run this script in a loop for every TIME seconds | `None`
  `--force` | `FORCE` | `force` | Force pdf parsing even if it's the same than remote | `false`
- `--ftp_test` | / | / | Test ftp connexion | /
  `-h`, `--help` | / | / | Show helper for this script | /
  `--version` | / | / | Show version of script | /
 
@@ -41,27 +40,21 @@ Argument | Environnement variable | json parameter | Comment | Default value
 
 _It should be in the config folder named `config.json`_
 
-### Data
-
-[Here is](sample/data.json) a data sample :
-
-_It should be in the config folder named `data.json`_
-
 ### FTP connexion
 
-When a ftp connexion is provided, this script uses it and send the file in root folder
+When one or more ftp connexions are provided, this script uses it and send the file in root folder
 
 To do so you need to setup your FTP credentials by adding a "ftp" key in `config.json` file like this :
 
 ```json
 {
-    "ftp": {
+    "ftp": [{
         "host":"your_host",
         "port":21,
         "user": "your_user",
         "password": "your_password",
         "ssl": true
-    }
+    }]
 }
 ```
 
