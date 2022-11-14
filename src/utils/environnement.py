@@ -41,7 +41,6 @@ class Environnement:
       ENV = Environnement.get_env()
       ENV.update(ATTR)
       config_file = ENV['config'] if ('config' in ENV) else cls.DEFAULT_CONFIG_PATH
-      print(ENV)
       CONFIG = Environnement.get_config(config_file)
       PARAMETTERS = CONFIG.copy()
       if ('general' in PARAMETTERS) and isinstance(PARAMETTERS['general'], dict):
