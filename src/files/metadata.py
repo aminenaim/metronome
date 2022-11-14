@@ -41,10 +41,10 @@ class Metadata:
         """
         if not os.path.exists(path=destination):
             return True
-        elif Metadata.is_local(source=source):
+        elif Metadata.is_local(url=source):
             return Metadata.time_local(path=source) > Metadata.time_local(path=destination)        
         else:
-            return Metadata.time_remote(path=source) > Metadata.time_local(path=destination) 
+            return Metadata.time_remote(url=source) > Metadata.time_local(path=destination) 
 
     @staticmethod
     def time_remote(url: str) -> datetime:
@@ -71,4 +71,4 @@ class Metadata:
             datetime: timestamp of last modification
         """
         timestamp = time.strftime(Metadata.__TIMESTR,time.gmtime(os.path.getmtime(path)))
-        return datetime.datetime.strptime(timestamp,Metadata.__TIMESTR)
+        return datetime.datetime.strptime(timestamp, Metadata.__TIMESTR)

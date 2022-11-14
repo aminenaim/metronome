@@ -70,6 +70,7 @@ class EdtCalendar:
         v,p = self.__person(name=str(course.group), mail=str(course.group).lower().replace(' ',''), role='REQ-PARTICIPANT', status='ACCEPTED', group=True)
         event.add('attendee', value=v, parameters=p, encode=1)
         event.add('description',self.__description(course.teacher, str(course.group)))
+        return event
         
     
     def __person(self, name:str, mail: str, role: str, status: str, group: bool) ->Tuple[str,dict]:
@@ -115,7 +116,7 @@ class EdtCalendar:
         """Get the ics files names
 
         Returns:
-            _type_: files names
+            List[str]: files names
         """
         return [f'{self.name[n]}.ics' for n in self.name]
 
