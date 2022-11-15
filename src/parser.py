@@ -40,7 +40,7 @@ def help() -> None:
 def loop_time() -> None:
    """Loop for forever, with a delay of 'TIME' seconds (with TIME provided by the user through config/env/cli) 
    """
-   delay = int(ENV['general']['time'])
+   delay = int(GENERAL['time'])
    print(f"Starting script, with refresh delay of {delay} sec")
    while(True):
       processing_levels()
@@ -50,11 +50,10 @@ def loop_time() -> None:
 def processing_levels() -> None:
    """Process each level given by the user
    """
-   workdir: str = ENV['general']['workdir'] 
-   output: str = ENV['general']['output']
-   schedules: dict = ENV['schedules']
+   workdir: str = GENERAL['workdir'] 
+   output: str = GENERAL['output']
    mkdir_if_not_exists(workdir)
-   for schedule, value in schedules.items():
+   for schedule, value in SCHEDULES.items():
       print(f"Processing {schedule} pdf")
       parsing_edt(schedule, value['url'], workdir, output)
 
@@ -82,7 +81,7 @@ def parsing_edt(level: str, url: str, workdir: str, ics_dir: str) -> None:
          courses = gen_courses(level_workdir, weeks)
          print(f"{level} : Generate ics callendars from {len(courses)} courses")
          files_name = gen_calendars(courses, level, ics_dir)
-         if ('ftp' in ENV):
+         if len(FTP):
             print(f"{level} : Sending files through ftp")
             send(files_name, ics_dir)
       else:
@@ -103,7 +102,7 @@ def edt_need_update(url : str, level_workdir : str) -> bool:
    Returns:
        bool: True if edt need update, False otherwise
    """
-   return ('force' in ENV['general'] and ENV['general']['force']) or Metadata.check_update(url, f'{level_workdir}/{Pdf.PDF_NAME}')
+   return ('force' in GENERAL and GENERAL['force']) or Metadata.check_update(url, f'{level_workdir}/{Pdf.PDF_NAME}')
 
 def gen_weeks(level_workdir: str, pages: List[Page]) -> List[Week]:
    """Generate weeks from pages
@@ -118,7 +117,7 @@ def gen_weeks(level_workdir: str, pages: List[Page]) -> List[Week]:
    weeks: List[Week] = []
    for page in pages:
       weeks += page.gen_weeks()
-      if 'detect' in ENV['general'] and ENV['general']['detect']:
+      if 'detect' in GENERAL and GENERAL['detect']:
          detect_words(page, f'{level_workdir}/detected')
    i = 0
    time_axe_ref = None
@@ -144,14 +143,14 @@ def gen_courses(level_workdir: str, weeks: List[Week]) -> List[Course]:
    """
    courses: List[Course] = []
    for week in weeks:
-      if 'detect' in ENV['general'] and ENV['general']['detect']:
+      if 'detect' in GENERAL and GENERAL['detect']:
          detect_elements(week, f'{level_workdir}/detected')
       if len(week.days) and len(week.hours.time_axe):  
          courses += week.gen_courses()
       else:
          print(f"Wrong Week detected with {len(week.days)} days and {len(week.hours)} hours")
    courses.sort(key=lambda x: x.begin)
-   if 'print' in ENV['general'] and ENV['general']['print']:
+   if 'print' in GENERAL and GENERAL['print']:
       print_courses(courses)
    return courses
 
@@ -179,8 +178,7 @@ def send(files_name: List[str], ics_folder: str) -> None:
        level (str): course level
        ics_folder (str) : ics directory
    """
-   ftp_ident = ENV['ftp']
-   for session in ftp_ident:
+   for session in FTP:
       ftp = FtpHandler(session)
       for fn in files_name:
          ftp.send_file(fn, ics_folder)
@@ -234,7 +232,7 @@ def main(argv : list):
    Args:
        argv (list): list of argument and values pass by the user
    """
-   global ENV
+   global GENERAL, FTP, SCHEDULES
    ATTR = {}
    action = None
    options, _ = getopt.getopt(argv, 'w:o:c:u:l:t:dpvh', ['workdir=','output=', 'config=', 'url=', 'level=', 'time=', 'detect', 'print', 'force', 'help',  'version'])
@@ -253,9 +251,9 @@ def main(argv : list):
          print(f"Unknown argument {opt}", file=sys.stderr)
          exit(1)
    
-   ENV = Environnement.get_parametters(ATTR)
+   GENERAL, FTP, SCHEDULES = Environnement.get_parametters(ATTR)
    if action is None:
-      action = loop_time if ('time' in ENV['general']) else processing_levels
+      action = loop_time if ('time' in GENERAL) else processing_levels
    action()
    exit(0)
 

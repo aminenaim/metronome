@@ -1,21 +1,38 @@
 import json
 import os
+from typing import Tuple
 
 from jsonschema import validate
 
 
 class Environnement:
+   """Environnement class managing configuration and environnement variables
+   """
    DEFAULT_CONFIG_PATH = "config/config.json"
-   VALIDATION_FOLDER = "schema/"
+   """Default config file
+   """
+   VALIDATION_CONFIG_FILE = "schema/config.json"
+   """File where schema are stored
+   """
    VARIABLES = ['level', 'detect', 'print', 'workdir', 'output', 'force', 'time']
+   """list of used environnement variables
+   """
 
    @classmethod
-   def get_config(cls, file: str):
+   def get_config(cls, file: str) -> dict:
+      """Gather configuration keys and values from the config JSON file
+
+      Args:
+          file (str): file path
+
+      Returns:
+          dict: configuration elements
+      """
       CONFIG = {}
       if not os.path.exists(file):
          return CONFIG
       else:
-         with open(f'{cls.VALIDATION_FOLDER}/config.json') as validation_file, open(file) as json_file:
+         with open(cls.VALIDATION_CONFIG_FILE) as validation_file, open(file) as json_file:
             json_object = json.load(json_file)
             validation_json = json.load(validation_file)
             validate(json_object, validation_json)
@@ -23,7 +40,12 @@ class Environnement:
          return CONFIG
          
    @classmethod
-   def get_env(cls):
+   def get_env(cls) -> dict:
+      """Gather environnement variables
+
+      Returns:
+          dict: environnement variables
+      """
       ENV = {}
       for v in Environnement.VARIABLES:
          value =  os.getenv(v.upper())
@@ -37,14 +59,21 @@ class Environnement:
       return ENV
 
    @classmethod
-   def get_parametters(cls, ATTR: dict):
+   def get_parametters(cls, arguments: dict) -> Tuple[dict, dict, dict]:
+      """Get parametters from all sources (cli, environnement and config file)
+
+      Args:
+          arguments (dict): cli arguments
+
+      Returns:
+          Tuple(dict, dict, dict): General, FTP and schedules parametters
+      """
       ENV = Environnement.get_env()
-      ENV.update(ATTR)
+      ENV.update(arguments)
       config_file = ENV['config'] if ('config' in ENV) else cls.DEFAULT_CONFIG_PATH
       CONFIG = Environnement.get_config(config_file)
       PARAMETTERS = CONFIG.copy()
-      if ('general' in PARAMETTERS) and isinstance(PARAMETTERS['general'], dict):
-         PARAMETTERS['general'].update(ENV)
-      else:
-         PARAMETTERS['general'] = ENV
-      return PARAMETTERS
+      if 'ftp' not in PARAMETTERS:
+         PARAMETTERS['ftp'] = []
+      PARAMETTERS['general'].update(ENV)
+      return PARAMETTERS['general'], PARAMETTERS['ftp'], PARAMETTERS['schedules']

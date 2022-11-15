@@ -4,26 +4,38 @@ from ftplib import FTP, FTP_TLS
 
 
 class FtpHandler:
-    def __init__(self, ftp_ident: dict):
-        if 'ssl' in ftp_ident and ftp_ident['ssl']:
+    """Class handling ftp operations
+    """
+    def __init__(self, config: dict):
+        """Creation of ftp handler
+
+        Args:
+            config (dict): ftp parametters 
+        """
+        if 'ssl' in config and config['ssl']:
             context = ssl.create_default_context()
             self.conn = FTP_TLS(context=context)
         else:
             self.conn = FTP()
-        self.conn.connect(host=ftp_ident['host'], port=ftp_ident['port'])
-        self.conn.login(user=ftp_ident['user'], passwd=ftp_ident['password'])
-        if 'folder' in ftp_ident:
-            self.conn.cwd(ftp_ident['folder'])
+        self.conn.connect(host=config['host'], port=config['port'])
+        self.conn.login(user=config['user'], passwd=config['password'])
+        if 'folder' in config:
+            self.conn.cwd(config['folder'])
     
-    def send_file(self, file_name, src_folder="/"):
+    def send_file(self, file_name: str, src_folder: str ="/") -> None:
+        """Send a file to the ftp server
+
+        Args:
+            file_name (str): file that should be sent
+            src_folder (str, optional): folder in which file sould be sent. Defaults to "/".
+        """
         dir_local = os.getcwd()
         os.chdir(src_folder)
         with open(file_name, 'rb') as fp:
             self.conn.storbinary('STOR ' + fp.name, fp)
         os.chdir(dir_local)
     
-    def list(self):
-        self.conn.retrlines('LIST')
-    
     def close(self):
+        """Close ftp connexion
+        """
         self.conn.close()
