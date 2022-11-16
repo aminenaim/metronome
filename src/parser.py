@@ -167,7 +167,8 @@ def gen_calendars(courses: List[Course], level: str, ics_dir: str) -> List[str]:
    """
    mkdir_if_not_exists(ics_dir)
    print(f"{level} : Generating Callendars")
-   calendar = EdtCalendar(courses, level)
+   alt = SCHEDULES[level]['alt'] if 'alt' in SCHEDULES[level] else ''
+   calendar = EdtCalendar(courses, level, alt)
    calendar.save(directory=ics_dir)
    return calendar.get_files_name()
 
