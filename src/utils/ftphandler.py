@@ -39,4 +39,4 @@ class FtpHandler:
     def close(self):
         """Close ftp connexion
         """
-        self.conn.close()
+        self.conn.quit()

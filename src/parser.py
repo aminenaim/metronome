@@ -1,3 +1,4 @@
+import ftplib
 import getopt
 import os
 import sys
@@ -86,8 +87,9 @@ def parsing_edt(level: str, url: str, workdir: str, ics_dir: str) -> None:
             send(files_name, ics_dir)
       else:
          print("Skiping, local pdf is older than remote pdf")
-   except (requests.exceptions.ConnectionError, urllib.error.URLError):
+   except (requests.exceptions.ConnectionError, urllib.error.URLError, ftplib.error_reply, ftplib.error_temp, ftplib.error_perm, ftplib.error_proto):
       print("Connexion error")
+      delete_if_exists(f"{level_workdir}/{Pdf.PDF_NAME}") 
       return
 
 def edt_need_update(url : str, level_workdir : str) -> bool:
@@ -217,7 +219,7 @@ def print_courses(courses: List[Course]) -> None:
       print(c)
       
 def mkdir_if_not_exists(folder: str) -> None:
-   """Create a folder if it doesn't extists
+   """Create a folder if it doesn't exists
 
    Args:
        folder (str): folder which must be created/checked
@@ -225,6 +227,15 @@ def mkdir_if_not_exists(folder: str) -> None:
    if not os.path.exists(folder):
       print(f"Creating \"{folder}\" folder")
       os.makedirs(folder)
+
+def delete_if_exists(file: str) -> None:
+   """Delete a file if it exists
+
+   Args:
+       file (str): file to delete
+   """
+   if os.path.exists(file):
+      os.remove(file)
 
 def main(argv : list):
    """Main function, Handle the cli arguments, gather environnement variables and config file parameters.
