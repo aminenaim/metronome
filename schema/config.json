@@ -90,6 +90,10 @@
                 "url": {
                     "type": "string",
                     "description": "URL of the schedule"
+                },
+                "alt": {
+                    "type": "string",
+                    "description": "other name of schedule"
                 }
             }
         }

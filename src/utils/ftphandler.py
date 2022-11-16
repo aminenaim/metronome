@@ -19,6 +19,7 @@ class FtpHandler:
             self.conn = FTP()
         self.conn.connect(host=config['host'], port=config['port'])
         self.conn.login(user=config['user'], passwd=config['password'])
+        self.conn.voidcmd("NOOP")
         if 'folder' in config:
             self.conn.cwd(config['folder'])
     
