@@ -1,0 +1,15 @@
+---
+version: "3.9"
+services:
+  jackiebot:
+    image: jhiliano/jackiebot:latest
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: jackiebot
+    network_mode: host
+    environment:
+      TIME: 900 # 15 min check
+    volumes:
+      - /path/to/config/folder:/config
+    restart: unless-stopped

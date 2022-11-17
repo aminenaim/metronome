@@ -1,0 +1,25 @@
+{
+    "$schema": "../schema/config.json",
+    "general": {
+        "workdir":"output",
+        "output":"output/ics",
+        "time" : 900
+    },
+    "ftp": [{
+        "host":"yourhost.com",
+        "user": "your_user",
+        "password": "your_password",
+        "ssl": true
+    }],
+    "schedules": {
+        "L3": {
+            "url":"https://l3_url"
+        },
+        "M1": {
+            "url":"https://m1_url"
+        },
+        "M2": {
+            "url":"https://m2_url"
+        }
+    }
+}
