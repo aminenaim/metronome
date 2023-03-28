@@ -13,7 +13,7 @@ from schedule import Course, Week, EdtCalendar
 from utils import Environnement, FtpHandler
 
 VERSION = '1.3.1'
-HELP = ("This script parse the well formed and very useful ( :D ) STRI pdf\n"
+HELP = ("This script parses a pdf schedule.\n"
         "\n"
         "Options:\n"
         "   -w, --workdir=[WORKDIR]   temp folder used by the script\n"
