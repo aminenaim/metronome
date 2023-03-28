@@ -1,6 +1,6 @@
 # Metronome
 
-Version 1.3.1
+Version 1.3.2
 
 This script parses a pdf schedule to ics format.
 
