@@ -2,7 +2,7 @@
 
 Version 1.3.1
 
-This script parse STRI edt from pdf to ics format.
+This script parses a pdf schedule to ics format.
 
 It uses python 3.8 and higher version
 
