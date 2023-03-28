@@ -1,12 +1,12 @@
 ---
 version: "3.9"
 services:
-  jackiebot:
-    image: jhiliano/jackiebot:latest
+  metronome:
+    image: aminenaim/metronome:latest
     build:
       context: ./
       dockerfile: Dockerfile
-    container_name: jackiebot
+    container_name: metronome
     network_mode: host
     environment:
       TIME: 900 # 15 min check

@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "$id": "https://github.com/Jhiliano/jackiebot/blob/main/schema/config.json",
+    "$id": "https://github.com/aminenaim/metronome/blob/main/schema/config.json",
     "title": "Jackiebot configuration file",
     "type": "object",
     "properties": {

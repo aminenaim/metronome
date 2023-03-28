@@ -2,7 +2,7 @@
 
 Version 1.3.2
 
-This script parses a pdf schedule to ics format.
+This script parses a pdf schedule to an intelligible ics format.
 
 It uses python 3.8 and higher version
 
