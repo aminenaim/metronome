@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "$id": "https://github.com/aminenaim/metronome/blob/main/schema/config.json",
-    "title": "Jackiebot configuration file",
+    "title": "Metronome configuration file",
     "type": "object",
     "properties": {
         "general": {
